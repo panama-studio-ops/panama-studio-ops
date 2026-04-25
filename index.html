@@ -422,41 +422,39 @@ function setSyncStatus(state, label) {
 }
 
 // ── API CALLS ────────────────────────────────────────────────
-async function apiCall(body) {
-  const res = await fetch(API, {method:'POST', body: JSON.stringify(body)});
-  return res.json();
+function apiCall(body) {
+  return fetch(API, {method:'POST', body: JSON.stringify(body)})
+    .then(function(res) { return res.json(); });
 }
 
-async function loadAll() {
+function loadAll() {
   setSyncStatus('syncing', 'Loading...');
-  try {
-    const [pd, td] = await Promise.all([
-      fetch(API + '?action=getAll').then(r => r.json()),
-      fetch(API + '?action=getTeam').then(r => r.json())
-    ]);
+  Promise.all([
+    fetch(API + '?action=getAll').then(function(r) { return r.json(); }),
+    fetch(API + '?action=getTeam').then(function(r) { return r.json(); })
+  ]).then(function(results) {
+    var pd = results[0];
+    var td = results[1];
     props = pd.props || [];
     TEAM  = td.team  || ['Unassigned'];
     if (!TEAM.includes('Unassigned')) TEAM.unshift('Unassigned');
     setSyncStatus('ok', 'Synced');
     renderPipeline();
-  } catch(e) {
+  }).catch(function() {
     setSyncStatus('error', 'Offline');
     renderPipeline();
-  }
+  });
 }
 
-async async function savePropToServer(p) {
+async function savePropToServer(p) {
   setSyncStatus('syncing', 'Saving...');
-  try {
-    await apiCall({action:'save', prop: p});
-    setSyncStatus('ok', 'Saved');
-  } catch(e) {
-    setSyncStatus('error', 'Save failed');
-  }
+  apiCall({action:'save', prop: p})
+    .then(function() { setSyncStatus('ok', 'Saved'); })
+    .catch(function() { setSyncStatus('error', 'Save failed'); });
 }
 
-async function saveTeamToServer() {
-  try { await apiCall({action:'saveTeam', team: TEAM}); } catch(e) {}
+function saveTeamToServer() {
+  apiCall({action:'saveTeam', team: TEAM}).catch(function(){});
 }
 
 // ── HELPERS ──────────────────────────────────────────────────
@@ -643,19 +641,16 @@ function openDetail(id) {
   document.getElementById('detail-overlay').classList.add('open');
 }
 
-async function deleteProp(id) {
+function deleteProp(id) {
   const p = props.find(x => x.id === id); if (!p) return;
   if (!confirm('Delete ' + p.address + '? This cannot be undone.')) return;
   props = props.filter(x => x.id !== id);
   closeDetail();
   renderPipeline();
   setSyncStatus('syncing','Deleting...');
-  try {
-    await apiCall({action:'delete', id});
-    setSyncStatus('ok','Saved');
-  } catch(e) {
-    setSyncStatus('error','Delete failed');
-  }
+  apiCall({action:'delete', id:id})
+    .then(function() { setSyncStatus('ok','Saved'); })
+    .catch(function() { setSyncStatus('error','Delete failed'); });
 }
 
 function renderDetailBody(p) {
@@ -1052,7 +1047,7 @@ function openAddModal(){
   document.getElementById('ap-dates-container').innerHTML=buildApDateFields();
   document.getElementById('add-overlay').classList.add('open');
 }
-async function saveNewProp(){
+function saveNewProp(){
   const addr=document.getElementById('ap-addr').value.trim();
   const client=document.getElementById('ap-client').value.trim();
   if(!addr||!client){alert('Please enter a property address and client name.');return;}
@@ -1082,7 +1077,7 @@ async function saveNewProp(){
   };
   props.push(newProp);
   closeAddModal();renderPipeline();
-  await savePropToServer(newProp);
+  savePropToServer(newProp);
   ['ap-addr','ap-client','ap-email','ap-agency','ap-agent','ap-agent-email','ap-value','ap-key'].forEach(id=>document.getElementById(id).value='');
 }
 
