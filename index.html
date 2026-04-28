@@ -704,16 +704,17 @@ function renderDetailBody(p) {
       </div>`).join('')
     : '<div style="font-size:12px;color:#bbb;padding:4px 0">No files linked yet.</div>';
 
-  const commentsHtml = (p.comments||[]).map(function(c,i) { return `<div class="comment" id="comment-${p.id}-${i}">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
-      <div class="comment-text" id="comment-text-${p.id}-${i}">${c.text}</div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button onclick="editComment(${p.id},${i})" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:11px;padding:0;font-family:inherit" title="Edit">&#9998;</button>
-        <button onclick="deleteComment(${p.id},${i})" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:14px;padding:0;line-height:1" title="Delete">&#215;</button>
-      </div>
-    </div>
-    <div class="comment-meta">${c.author} &middot; ${c.time}</div>
-  </div>`; }).join('');
+  const commentsHtml = (p.comments||[]).map(function(c,i) {
+    return '<div class="comment" id="comment-'+p.id+'-'+i+'">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'+
+      '<div class="comment-text" id="comment-text-'+p.id+'-'+i+'">'+c.text+'</div>'+
+      '<div style="display:flex;gap:6px;flex-shrink:0">'+
+      '<button onclick="editComment('+p.id+','+i+')" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:11px;padding:0;font-family:inherit" title="Edit">&#9998;</button>'+
+      '<button onclick="deleteComment('+p.id+','+i+')" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:14px;padding:0;line-height:1" title="Delete">&#215;</button>'+
+      '</div></div>'+
+      '<div class="comment-meta">'+c.author+' &middot; '+c.time+'</div>'+
+      '</div>';
+  }).join('');
 
   document.getElementById('dm-body').innerHTML = `
     <div class="edit-section" id="edit-sec-${p.id}">
