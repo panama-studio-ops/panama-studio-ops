@@ -520,8 +520,7 @@ function downloadIcs(label, d, addr) {
     'STATUS:' + status,
     'END:VEVENT',
     'END:VCALENDAR'
-  ].join('
-');
+  ].join('\r\n');
 
   // Use data URI which works in all browsers including GitHub Pages
   var dataUri = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent);
