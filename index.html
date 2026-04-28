@@ -360,7 +360,7 @@ tr.prop-row:hover td{background:#fafaf8}
         <div class="ap-fg"><label>Client name</label><input id="ap-client" placeholder="Jane Smith"></div>
         <div class="ap-fg"><label>Client email</label><input id="ap-email" type="email" placeholder="jane@email.com"></div>
         <div class="ap-fg"><label>Staging value (ex GST)</label><input id="ap-value" type="number" placeholder="4500"></div>
-        <div class="ap-fg"><label>Project type</label><select id="ap-type"><option>Full Stage</option><option>Partial Stage</option><option>Interior Design</option></select></div>
+        <div class="ap-fg"><label>Project type</label><select id="ap-type"><option>Full Stage</option><option>Partial Stage</option><option>Interior Design</option><option>Photo Package - Essential</option><option>Photo Package - Styled</option></select></div>
         <div class="ap-fg"><label>Status</label><select id="ap-status"><option>Lead Only</option><option>Proposal Request</option><option>Proposal Sent</option><option>Accepted/Planning</option><option>Live Staging</option><option>Demobilise/Complete</option></select></div>
         <div class="ap-fg"><label>Invoice status</label><select id="ap-inv"><option>Not sent</option><option>Sent</option><option>Deposit received</option><option>Final payment received</option></select></div>
         <div class="ap-fg" style="grid-column:1/-1"><label>Key / access info</label><input id="ap-key" placeholder="Lockbox front door — code 4729"></div>
@@ -493,62 +493,45 @@ function addToCalendar(pid, dateKey) {
 
 function downloadIcs(label, d, addr) {
   if (!d.date) return;
-  const fmt = (dateStr, timeStr) => {
-    const dt = new Date(dateStr + 'T' + (timeStr || '09:00') + ':00');
-    return dt.getFullYear() +
-      String(dt.getMonth()+1).padStart(2,'0') +
-      String(dt.getDate()).padStart(2,'0') + 'T' +
-      String(dt.getHours()).padStart(2,'0') +
-      String(dt.getMinutes()).padStart(2,'0') + '00';
-  };
-  const startDate = d.date;
-  const startTime = d.startTime || '09:00';
-  const endDate   = d.endDate || d.date;
-  const endTime   = d.endTime || '17:00';
-  const status    = d.confirmed ? 'CONFIRMED' : 'TENTATIVE';
-  const title     = 'Panama Studio — ' + label + ': ' + addr.split(',')[0];
+  var startDate = d.date;
+  var startTime = d.startTime || '09:00';
+  var endDate   = d.endDate || d.date;
+  var endTime   = d.endTime || '17:00';
+  var status    = d.confirmed ? 'CONFIRMED' : 'TENTATIVE';
+  var title     = 'Panama Studio - ' + label + ': ' + addr.split(',')[0];
 
-  // Try Outlook app deep link first (works on iPhone with Outlook app installed)
-  const sdt = startDate + 'T' + startTime + ':00';
-  const edt = endDate + 'T' + endTime + ':00';
-  const subj = encodeURIComponent(title);
-  const body = encodeURIComponent('Property: ' + addr + '\nStatus: ' + status);
-  const loc  = encodeURIComponent(addr);
-
-  // Show options to user
-  const useApp = confirm('Tap OK to open in Outlook app\nTap Cancel to download as calendar file (.ics) for Apple Calendar');
-
-  if (useApp) {
-    // Outlook app deep link
-    window.location.href = 'ms-outlook://events/new?subject=' + subj + '&startdt=' + encodeURIComponent(sdt) + '&enddt=' + encodeURIComponent(edt) + '&location=' + loc;
-  } else {
-    // ICS download for Apple Calendar
-    const ics = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Panama Studio//Staging Ops//EN',
-      'BEGIN:VEVENT',
-      'UID:' + Date.now() + '@panamastudio',
-      'DTSTAMP:' + fmt(new Date().toISOString().slice(0,10), new Date().toTimeString().slice(0,5)),
-      'DTSTART:' + fmt(startDate, startTime),
-      'DTEND:' + fmt(endDate, endTime),
-      'SUMMARY:' + title,
-      'DESCRIPTION:Property: ' + addr + '\nStatus: ' + status,
-      'LOCATION:' + addr,
-      'STATUS:' + status,
-      'END:VEVENT',
-      'END:VCALENDAR'
-    ].join('\r\n');
-    const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = label.replace(/\s+/g,'-').toLowerCase() + '.ics';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  function fmtDt(dateStr, timeStr) {
+    var parts = dateStr.split('-');
+    var tparts = (timeStr||'09:00').split(':');
+    return parts[0] + parts[1] + parts[2] + 'T' + tparts[0] + tparts[1] + '00';
   }
+
+  var icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Panama Studio//Staging Ops//EN',
+    'BEGIN:VEVENT',
+    'UID:' + Date.now() + '@panamastudio.com',
+    'DTSTART:' + fmtDt(startDate, startTime),
+    'DTEND:' + fmtDt(endDate, endTime),
+    'SUMMARY:' + title,
+    'DESCRIPTION:Property: ' + addr + ' Status: ' + status,
+    'LOCATION:' + addr,
+    'STATUS:' + status,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('
+');
+
+  // Use data URI which works in all browsers including GitHub Pages
+  var dataUri = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent);
+  var a = document.createElement('a');
+  a.href = dataUri;
+  a.download = label.replace(/\s+/g,'-').toLowerCase() + '-' + startDate + '.ics';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 // ── PIPELINE ─────────────────────────────────────────────────
@@ -721,10 +704,16 @@ function renderDetailBody(p) {
       </div>`).join('')
     : '<div style="font-size:12px;color:#bbb;padding:4px 0">No files linked yet.</div>';
 
-  const commentsHtml = (p.comments||[]).map(c => `<div class="comment">
-    <div class="comment-text">${c.text}</div>
+  const commentsHtml = (p.comments||[]).map(function(c,i) { return `<div class="comment" id="comment-${p.id}-${i}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div class="comment-text" id="comment-text-${p.id}-${i}">${c.text}</div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="editComment(${p.id},${i})" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:11px;padding:0;font-family:inherit" title="Edit">&#9998;</button>
+        <button onclick="deleteComment(${p.id},${i})" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:14px;padding:0;line-height:1" title="Delete">&#215;</button>
+      </div>
+    </div>
     <div class="comment-meta">${c.author} &middot; ${c.time}</div>
-  </div>`).join('');
+  </div>`; }).join('');
 
   document.getElementById('dm-body').innerHTML = `
     <div class="edit-section" id="edit-sec-${p.id}">
@@ -753,7 +742,7 @@ function renderDetailBody(p) {
           <select onchange="updateProp(${p.id},'invoice',this.value)">${['Not sent','Sent','Deposit received','Final payment received'].map(s=>`<option ${s===p.invoice?'selected':''}>${s}</option>`).join('')}</select>
         </div></div>
         <div class="detail-box"><div class="detail-lbl">Project type</div><div class="detail-val">
-          <select onchange="updateProp(${p.id},'type',this.value)">${['Full Stage','Partial Stage','Interior Design'].map(s=>`<option ${s===p.type?'selected':''}>${s}</option>`).join('')}</select>
+          <select onchange="updateProp(${p.id},'type',this.value)">${['Full Stage','Partial Stage','Interior Design','Photo Package - Essential','Photo Package - Styled'].map(s=>`<option ${s===p.type?'selected':''}>${s}</option>`).join('')}</select>
         </div></div>
         <div class="detail-box"><div class="detail-lbl">Staging value (ex GST)</div><div class="detail-val">
           <input type="number" value="${p.value||''}" onchange="updateProp(${p.id},'value',parseFloat(this.value)||0)">
@@ -963,9 +952,36 @@ function addComment(pid){
   const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const h=now.getHours();const mn=String(now.getMinutes()).padStart(2,'0');
   if(!p.comments)p.comments=[];
-  p.comments.push({text:txt,time:`${mo[now.getMonth()]} ${now.getDate()}, ${h}:${mn}${h<12?'am':'pm'}`,author:'You'});
-  inp.value='';savePropToServer(p);
-  document.getElementById('cm-'+pid).innerHTML=p.comments.map(c=>`<div class="comment"><div class="comment-text">${c.text}</div><div class="comment-meta">${c.author} &middot; ${c.time}</div></div>`).join('');
+  p.comments.push({text:txt,time:mo[now.getMonth()]+' '+now.getDate()+', '+h+':'+mn+(h<12?'am':'pm'),author:'You'});
+  inp.value='';savePropToServer(p);renderDetailBody(p);
+}
+function deleteComment(pid,idx){
+  const p=props.find(x=>x.id===pid);if(!p||!p.comments)return;
+  if(!confirm('Delete this comment?'))return;
+  p.comments.splice(idx,1);savePropToServer(p);renderDetailBody(p);
+}
+function editComment(pid,idx){
+  const p=props.find(x=>x.id===pid);if(!p||!p.comments)return;
+  const c=p.comments[idx];
+  const textEl=document.getElementById('comment-text-'+pid+'-'+idx);
+  if(!textEl)return;
+  const original=c.text;
+  textEl.innerHTML='<input id="edit-comment-input-'+pid+'-'+idx+'" value="'+c.text.replace(/"/g,'&quot;')+'" style="width:100%;padding:5px 8px;font-size:13px;border:1px solid #e0deda;border-radius:6px;font-family:inherit">';
+  const input=document.getElementById('edit-comment-input-'+pid+'-'+idx);
+  input.focus();
+  input.onkeydown=function(e){
+    if(e.key==='Enter'){
+      const newText=input.value.trim();
+      if(newText){c.text=newText;savePropToServer(p);}
+      renderDetailBody(p);
+    }
+    if(e.key==='Escape'){renderDetailBody(p);}
+  };
+  input.onblur=function(){
+    const newText=input.value.trim();
+    if(newText&&newText!==original){c.text=newText;savePropToServer(p);}
+    renderDetailBody(p);
+  };
 }
 
 // ── MODAL HELPERS ────────────────────────────────────────────
