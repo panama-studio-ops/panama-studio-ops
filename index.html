@@ -263,10 +263,26 @@ tr.prop-row:hover td{background:#fafaf8}
 <!-- PIPELINE VIEW -->
 <div class="main view active" id="view-pipeline">
   <div class="metrics">
-    <div class="metric"><div class="metric-label">Total jobs</div><div class="metric-value" id="m-total">—</div></div>
-    <div class="metric"><div class="metric-label">Active jobs</div><div class="metric-value" id="m-active">—</div></div>
-    <div class="metric"><div class="metric-label">Total pipeline value</div><div class="metric-value green" id="m-value">—</div></div>
-    <div class="metric"><div class="metric-label">Awaiting payment</div><div class="metric-value" id="m-awaiting">—</div></div>
+    <div class="metric">
+      <div class="metric-label">Leads pipeline</div>
+      <div class="metric-value" id="m-leads">—</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">Lead, Proposal Request, Sent</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Accepted pipeline</div>
+      <div class="metric-value" style="color:#5B21B6" id="m-committed">—</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">Accepted / Planning</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Live (in the bank)</div>
+      <div class="metric-value green" id="m-live">—</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">Live Staging</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Total active jobs</div>
+      <div class="metric-value" id="m-total">—</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">Excl. complete</div>
+    </div>
   </div>
   <div class="section-header">
     <div style="display:flex;align-items:center;gap:10px">
@@ -275,9 +291,9 @@ tr.prop-row:hover td{background:#fafaf8}
     </div>
     <div class="filters">
       <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
-      <button class="filter-btn" onclick="setFilter('Live Staging',this)">Live</button>
+      <button class="filter-btn" onclick="setFilter('leads',this)">Leads</button>
       <button class="filter-btn" onclick="setFilter('Accepted/Planning',this)">Planning</button>
-      <button class="filter-btn" onclick="setFilter('Proposal Sent',this)">Proposal</button>
+      <button class="filter-btn" onclick="setFilter('Live Staging',this)">Live</button>
       <button class="filter-btn" onclick="setFilter('Demobilise/Complete',this)">Complete</button>
     </div>
   </div>
@@ -394,11 +410,11 @@ tr.prop-row:hover td{background:#fafaf8}
 const API = 'https://script.google.com/macros/s/AKfycbyN5TH8LHr6qCbmpyR0gcd4agsJ1Pz19D8RLlf-cfhU_dztvhN4b0ClLnUWAEuv3wYp/exec';
 
 const DATE_TYPES = [
-  {key:'staging',   label:'Staging',       cls:'dt-staging'},
-  {key:'pack',      label:'Pick & pack',    cls:'dt-pack'},
-  {key:'logistics', label:'Logistics team', cls:'dt-logistics'},
-  {key:'photo',     label:'Photography',    cls:'dt-photo'},
-  {key:'destage',   label:'Destage',        cls:'dt-destage'}
+  {key:'staging',   label:'Staging',       cls:'dt-staging',   singleDay:false},
+  {key:'pack',      label:'Pick & pack',    cls:'dt-pack',      singleDay:true},
+  {key:'logistics', label:'Logistics team', cls:'dt-logistics', singleDay:true},
+  {key:'photo',     label:'Photography',    cls:'dt-photo',     singleDay:true},
+  {key:'destage',   label:'Destage',        cls:'dt-destage',   singleDay:false}
 ];
 const CHECKLIST_PHASES = [
   {id:'prebook',    label:'Pre-booking', color:'#D97706', items:['Proposal sent','XERO updated with client info & budget forecast']},
@@ -535,18 +551,27 @@ function downloadIcs(label, d, addr) {
 
 // ── PIPELINE ─────────────────────────────────────────────────
 function renderPipeline() {
-  const filtered = activeFilter === 'all' ? props : props.filter(p => p.status === activeFilter);
+  var LEAD_FILTER = ['Lead Only','Proposal Request','Proposal Sent'];
+  const filtered = activeFilter === 'all' ? props
+    : activeFilter === 'leads' ? props.filter(function(p){ return LEAD_FILTER.includes(p.status); })
+    : props.filter(function(p){ return p.status === activeFilter; });
   let tv = 0, active = 0, awaiting = 0;
-  props.forEach(p => {
-    const addonsTotal = (p.addons||[]).reduce((sum,a) => sum+(parseFloat(a.value)||0), 0);
-    tv += (p.value||0) + addonsTotal;
-    if(ACTIVE_STATUSES.includes(p.status)) active++;
-    if(p.invoice==='Sent') awaiting++;
+  var leadsVal = 0, committedVal = 0, liveVal = 0, activeCount = 0;
+  var LEAD_STATUSES = ['Lead Only','Proposal Request','Proposal Sent'];
+  var COMMITTED_STATUSES = ['Accepted/Planning'];
+  var LIVE_STATUSES = ['Live Staging'];
+  props.forEach(function(p) {
+    var addonsTotal = (p.addons||[]).reduce(function(sum,a){ return sum+(parseFloat(a.value)||0); }, 0);
+    var total = (p.value||0) + addonsTotal;
+    if(LEAD_STATUSES.includes(p.status)) leadsVal += total;
+    if(COMMITTED_STATUSES.includes(p.status)) committedVal += total;
+    if(LIVE_STATUSES.includes(p.status)) liveVal += total;
+    if(p.status !== 'Demobilise/Complete') activeCount++;
   });
-  document.getElementById('m-total').textContent    = props.length;
-  document.getElementById('m-active').textContent   = active;
-  document.getElementById('m-value').textContent    = '$' + tv.toLocaleString();
-  document.getElementById('m-awaiting').textContent = awaiting;
+  document.getElementById('m-leads').textContent     = '$' + leadsVal.toLocaleString();
+  document.getElementById('m-committed').textContent = '$' + committedVal.toLocaleString();
+  document.getElementById('m-live').textContent      = '$' + liveVal.toLocaleString();
+  document.getElementById('m-total').textContent     = activeCount;
 
   if (!filtered.length) {
     const empty = '<div class="empty"><div class="empty-icon">&#127968;</div><p>No properties yet — tap "+ New" to get started.</p></div>';
@@ -608,7 +633,7 @@ function renderPipeline() {
 
 function setFilter(f, el) {
   activeFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
   el.classList.add('active');
   renderPipeline();
 }
@@ -649,9 +674,9 @@ function renderDetailBody(p) {
         </span>
       </div>
       <div class="date-fields">
-        <div class="date-field-group"><label>Start date</label><input type="date" value="${d.date||''}" onchange="updateDateField(${p.id},'${dt.key}','date',this.value)"></div>
+        <div class="date-field-group"><label>Date</label><input type="date" value="${d.date||''}" onchange="updateDateField(${p.id},'${dt.key}','date',this.value)"></div>
         <div class="date-field-group"><label>Start time</label><input type="time" value="${d.startTime||'09:00'}" onchange="updateDateField(${p.id},'${dt.key}','startTime',this.value)"></div>
-        <div class="date-field-group"><label>End date</label><input type="date" value="${d.endDate||d.date||''}" onchange="updateDateField(${p.id},'${dt.key}','endDate',this.value)"></div>
+        ${dt.singleDay ? '' : `<div class="date-field-group"><label>End date</label><input type="date" value="${d.endDate||d.date||''}" onchange="updateDateField(${p.id},'${dt.key}','endDate',this.value)"></div>`}
         <div class="date-field-group"><label>End time</label><input type="time" value="${d.endTime||'17:00'}" onchange="updateDateField(${p.id},'${dt.key}','endTime',this.value)"></div>
       </div>
       ${d.date
@@ -1051,9 +1076,9 @@ function buildApDateFields(){
     <div class="ap-date-block">
       <div class="ap-date-block-title ${dt.cls}">${dt.label}</div>
       <div class="ap-date-grid">
-        <div class="ap-date-fg"><label>Start date</label><input id="ap-d-${dt.key}-date" type="date"></div>
+        <div class="ap-date-fg"><label>Date</label><input id="ap-d-${dt.key}-date" type="date"></div>
         <div class="ap-date-fg"><label>Start time</label><input id="ap-d-${dt.key}-start" type="time" value="09:00"></div>
-        <div class="ap-date-fg"><label>End date</label><input id="ap-d-${dt.key}-end" type="date"></div>
+        ${dt.singleDay ? '' : '<div class="ap-date-fg"><label>End date</label><input id="ap-d-'+dt.key+'-end" type="date"></div>'}
         <div class="ap-date-fg"><label>End time</label><input id="ap-d-${dt.key}-etime" type="time" value="17:00"></div>
         <label class="conf-check"><input type="checkbox" id="ap-d-${dt.key}-conf"> Confirmed</label>
       </div>
