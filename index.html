@@ -679,9 +679,9 @@ function renderDetailBody(p) {
         ${dt.singleDay ? '' : `<div class="date-field-group"><label>End date</label><input type="date" value="${d.endDate||d.date||''}" onchange="updateDateField(${p.id},'${dt.key}','endDate',this.value)"></div>`}
         <div class="date-field-group"><label>End time</label><input type="time" value="${d.endTime||'17:00'}" onchange="updateDateField(${p.id},'${dt.key}','endTime',this.value)"></div>
       </div>
-      <div style="font-size:11px;color:${d.date?(d.confirmed?'#059669':'#D97706'):'#bbb'};margin-top:4px;display:flex;align-items:center;gap:4px">
+      <div style="font-size:11px;margin-top:4px">
         ${d.date
-          ? `<span>&#10003; ${d.confirmed?'Confirmed':'Tentative'} — auto-syncs to Outlook</span>`
+          ? `<span style="color:${d.confirmed?'#059669':'#D97706'}">&#10003; ${d.confirmed?'Confirmed':'Tentative'} — syncing to Outlook...</span>`
           : `<span style="color:#bbb">Enter date to sync to Outlook calendar</span>`}
       </div>
     </div>`;
@@ -855,7 +855,6 @@ function updateDateField(id, key, field, val) {
   p.dates[key][field] = val;
   savePropToServer(p);
   renderDetailBody(p);
-  // Auto sync to Outlook calendar if date is set
   if(p.dates[key].date) syncToCalendar(p, key);
 }
 function toggleConf(id, key) {
