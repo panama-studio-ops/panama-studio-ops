@@ -679,9 +679,11 @@ function renderDetailBody(p) {
         ${dt.singleDay ? '' : `<div class="date-field-group"><label>End date</label><input type="date" value="${d.endDate||d.date||''}" onchange="updateDateField(${p.id},'${dt.key}','endDate',this.value)"></div>`}
         <div class="date-field-group"><label>End time</label><input type="time" value="${d.endTime||'17:00'}" onchange="updateDateField(${p.id},'${dt.key}','endTime',this.value)"></div>
       </div>
-      ${d.date
-        ? `<button class="gcal-btn ${tc}" onclick="addToCalendar(${p.id},'${dt.key}')">&#128197; Add to Outlook Calendar</button>`
-        : `<span class="gcal-btn disabled">&#128197; Add to Outlook Calendar</span>`}
+      <div style="font-size:11px;color:${d.date?(d.confirmed?'#059669':'#D97706'):'#bbb'};margin-top:4px;display:flex;align-items:center;gap:4px">
+        ${d.date
+          ? `<span>&#10003; ${d.confirmed?'Confirmed':'Tentative'} — auto-syncs to Outlook</span>`
+          : `<span style="color:#bbb">Enter date to sync to Outlook calendar</span>`}
+      </div>
     </div>`;
   }).join('');
 
@@ -850,11 +852,18 @@ function updateProp(id, field, val) {
 function updateDateField(id, key, field, val) {
   const p = props.find(x => x.id===id); if(!p) return;
   if(!p.dates[key]) p.dates[key]={date:'',startTime:'09:00',endTime:'17:00',endDate:'',confirmed:false};
-  p.dates[key][field] = val; savePropToServer(p); renderDetailBody(p);
+  p.dates[key][field] = val;
+  savePropToServer(p);
+  renderDetailBody(p);
+  // Auto sync to Outlook calendar if date is set
+  if(p.dates[key].date) syncToCalendar(p, key);
 }
 function toggleConf(id, key) {
   const p = props.find(x => x.id===id); if(!p) return;
-  p.dates[key].confirmed = !p.dates[key].confirmed; savePropToServer(p); renderDetailBody(p);
+  p.dates[key].confirmed = !p.dates[key].confirmed;
+  savePropToServer(p);
+  renderDetailBody(p);
+  if(p.dates[key].date) syncToCalendar(p, key);
 }
 function toggleEdit(pid) {
   const s = document.getElementById('edit-sec-'+pid); if(!s) return;
@@ -1062,6 +1071,22 @@ function exportToCSV() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+function syncToCalendar(p, dateKey) {
+  setSyncStatus('syncing', 'Syncing calendar...');
+  apiCall({action:'syncCalendar', prop:p, dateKey:dateKey})
+    .then(function(result) {
+      if(result.eventId) {
+        p.dates[dateKey].calendarEventId = result.eventId;
+        savePropToServer(p);
+        setSyncStatus('ok', 'Calendar synced ✓');
+      } else {
+        setSyncStatus('ok', 'Saved');
+      }
+    })
+    .catch(function() {
+      setSyncStatus('ok', 'Saved');
+    });
 }
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');renderPipeline();}
 function handleDetailBg(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
