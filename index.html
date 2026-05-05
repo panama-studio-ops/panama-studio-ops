@@ -381,41 +381,24 @@ function loadAll() {
   });
 }
 
-function addToCalendar(pid, dateKey) {
-  var p = props.find(function(x){ return x.id===pid; }); if(!p) return;
-  var d = p.dates[dateKey]; if(!d || !d.date) return;
-  var dt = DATE_TYPES.find(function(x){ return x.key===dateKey; });
-  downloadIcs(dt.label, d, p.address);
-}
-
-function downloadIcs(label, d, addr) {
-  if (!d.date) return;
-  var startDate = d.date;
-  var startTime = d.startTime || '09:00';
-  var endDate   = d.endDate || d.date;
-  var endTime   = d.endTime || '17:00';
-  var status    = d.confirmed ? 'CONFIRMED' : 'TENTATIVE';
-  var title     = 'Panama Studio - ' + label + ': ' + addr.split(',')[0];
-  function fmtDt(dateStr, timeStr) {
-    var parts = dateStr.split('-');
-    var tparts = (timeStr||'09:00').split(':');
-    return parts[0]+parts[1]+parts[2]+'T'+tparts[0]+tparts[1]+'00';
-  }
-  var icsContent = [
-    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Panama Studio//Staging Ops//EN',
-    'BEGIN:VEVENT','UID:'+Date.now()+'@panamastudio.com',
-    'DTSTART:'+fmtDt(startDate,startTime),'DTEND:'+fmtDt(endDate,endTime),
-    'SUMMARY:'+title,'DESCRIPTION:Property: '+addr+' Status: '+status,
-    'LOCATION:'+addr,'STATUS:'+status,'END:VEVENT','END:VCALENDAR'
-  ].join('\r\n');
-  var dataUri = 'data:text/calendar;charset=utf8,'+encodeURIComponent(icsContent);
-  var a = document.createElement('a');
-  a.href = dataUri;
-  a.download = label.replace(/\s+/g,'-').toLowerCase()+'-'+startDate+'.ics';
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+function syncToCalendar(p, dateKey) {
+  if(!p.dates[dateKey] || !p.dates[dateKey].date) return;
+  apiCall({action:'syncCalendar', prop:p, dateKey:dateKey})
+    .then(function(result) {
+      if(result && result.eventId) {
+        p.dates[dateKey].calendarEventId = result.eventId;
+        apiCall({action:'save', prop:p});
+        setSyncStatus('ok', 'Calendar synced ✓');
+        var el = document.getElementById('cal-status-'+p.id+'-'+dateKey);
+        if(el) {
+          el.className = 'cal-status '+(p.dates[dateKey].confirmed?'synced':'tentative');
+          el.textContent = '✓ '+(p.dates[dateKey].confirmed?'Confirmed':'Tentative')+' — synced to Outlook';
+        }
+      } else {
+        setSyncStatus('ok', 'Saved');
+      }
+    })
+    .catch(function() { setSyncStatus('ok', 'Saved'); });
 }
 
 function savePropToServer(p) {
@@ -580,9 +563,7 @@ function renderDetailBody(p) {
       (!dt.singleDay ? '<div class="date-field-group"><label>End date</label><input type="date" value="'+(d.endDate||d.date||'')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'endDate\',this.value)"></div>' : '')+
       '<div class="date-field-group"><label>End time</label><input type="time" value="'+(d.endTime||'17:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'endTime\',this.value)"></div>'+
       '</div>'+
-      (d.date
-        ? '<button class="gcal-btn '+tc+'" onclick="addToCalendar('+p.id+',''+dt.key+'')">&#128197; Add to Outlook Calendar</button>'
-        : '<span class="gcal-btn disabled">&#128197; Add to Outlook Calendar</span>')+
+      '<div class="cal-status '+(d.date?(d.confirmed?'synced':'tentative'):'pending')+'" id="cal-status-'+p.id+'-'+dt.key+'">'+(d.date?(d.calendarEventId?('✓ '+(d.confirmed?'Confirmed':'Tentative')+' — synced to Outlook'):(d.confirmed?'Confirmed':'Tentative')+' — syncing...'):'Enter date to sync to Outlook calendar')+'</div>'+
       '</div>';
   }).join('');
 
@@ -721,13 +702,17 @@ function updateDateField(id,key,field,val){
   var p=props.find(function(x){return x.id===id;});if(!p)return;
   if(!p.dates[key])p.dates[key]={date:'',startTime:'09:00',endTime:'17:00',endDate:'',confirmed:false};
   p.dates[key][field]=val;
-  savePropToServer(p); renderDetailBody(p);
+  savePropToServer(p);
+  renderDetailBody(p);
+  if(p.dates[key].date) syncToCalendar(p,key);
 }
 
 function toggleConf(id,key){
   var p=props.find(function(x){return x.id===id;});if(!p)return;
   p.dates[key].confirmed=!p.dates[key].confirmed;
-  savePropToServer(p); renderDetailBody(p);
+  savePropToServer(p);
+  renderDetailBody(p);
+  if(p.dates[key].date) syncToCalendar(p,key);
 }
 
 function toggleEdit(pid){var s=document.getElementById('edit-sec-'+pid);if(!s)return;s.style.display=s.style.display==='block'?'none':'block';if(s.style.display==='block')s.scrollIntoView({behavior:'smooth',block:'nearest'});}
