@@ -333,11 +333,14 @@ tr.prop-row:hover td{background:#fafaf8}
 const API = 'https://script.google.com/macros/s/AKfycbyN5TH8LHr6qCbmpyR0gcd4agsJ1Pz19D8RLlf-cfhU_dztvhN4b0ClLnUWAEuv3wYp/exec';
 
 const DATE_TYPES = [
-  {key:'staging',   label:'Staging',       cls:'dt-staging',   singleDay:false},
-  {key:'pack',      label:'Pick & pack',    cls:'dt-pack',      singleDay:true},
+  {key:'staging1',  label:'Staging Day 1',  cls:'dt-staging',   singleDay:true},
+  {key:'staging2',  label:'Staging Day 2',  cls:'dt-staging',   singleDay:true},
+  {key:'pack1',     label:'Pick & Pack Day 1', cls:'dt-pack',   singleDay:true},
+  {key:'pack2',     label:'Pick & Pack Day 2', cls:'dt-pack',   singleDay:true},
   {key:'logistics', label:'Logistics team', cls:'dt-logistics', singleDay:true},
   {key:'photo',     label:'Photography',    cls:'dt-photo',     singleDay:true},
-  {key:'destage',   label:'Destage',        cls:'dt-destage',   singleDay:false}
+  {key:'destage1',  label:'Destage Day 1',  cls:'dt-destage',   singleDay:true},
+  {key:'destage2',  label:'Destage Day 2',  cls:'dt-destage',   singleDay:true}
 ];
 const CHECKLIST_PHASES = [
   {id:'prebook',    label:'Pre-booking', color:'#D97706', items:['Proposal sent','XERO updated with client info & budget forecast']},
@@ -823,7 +826,7 @@ function addAddon(pid){
 function removeAddon(pid,idx){var p=props.find(function(x){return x.id===pid;});if(!p||!p.addons)return;p.addons.splice(idx,1);savePropToServer(p);renderDetailBody(p);renderPipeline();}
 
 function exportToCSV(){
-  var headers=['Property Address','Client','Client Email','Agency','Agent','Agent Email','Type','Status','Invoice','Staging Value','Add-ons Total','Total Value','Staging Date','Pick & Pack Date','Logistics Date','Photography Date','Destage Date'];
+  var headers=['Property Address','Client','Client Email','Agency','Agent','Agent Email','Type','Status','Invoice','Staging Value','Add-ons Total','Total Value','Staging Day 1','Staging Day 2','Pick & Pack Day 1','Pick & Pack Day 2','Logistics Date','Photography Date','Destage Day 1','Destage Day 2'];
   var rows=props.map(function(p){
     var addT=(p.addons||[]).reduce(function(s,a){return s+(parseFloat(a.value)||0);},0);
     var fmtDate=function(key){return p.dates&&p.dates[key]&&p.dates[key].date?p.dates[key].date:'';};
