@@ -250,6 +250,7 @@ tr.prop-row:hover td{background:#fafaf8}
         <th style="width:11%">Agent</th>
         <th style="width:11%">Client</th>
         <th style="width:12%">Status</th>
+        <th style="width:9%">Stage</th>
         <th style="width:9%">Type</th>
         <th style="width:8%">Staging</th>
         <th style="width:8%">Add-ons</th>
@@ -485,6 +486,7 @@ function renderPipeline() {
       '<td style="color:#666;font-size:12px">'+(p.agent||'—')+'</td>'+
       '<td style="color:#666;font-size:12px">'+(p.client||'—')+'</td>'+
       '<td><span class="badge '+sc+'">'+p.status+'</span></td>'+
+      '<td style="color:#065F46;font-size:12px;font-weight:600">'+(p.dates&&p.dates.staging1&&p.dates.staging1.date?new Date(p.dates.staging1.date+'T12:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}):'—')+'</td>'+
       '<td style="color:#888;font-size:12px">'+p.type+'</td>'+
       '<td style="font-weight:600">$'+(p.value||0).toLocaleString()+'</td>'+
       '<td style="font-size:12px;color:#666">$'+addT.toLocaleString()+'</td>'+
@@ -503,14 +505,13 @@ function renderPipeline() {
       '<div class="prop-card-client">'+p.client+'</div></div>'+
       '<span class="badge '+sc+'">'+p.status+'</span></div>'+
       '<div class="prop-card-mid">'+
+      (p.dates&&p.dates.staging1&&p.dates.staging1.date?'<span style="font-size:11px;color:#065F46;font-weight:600">Stage: '+new Date(p.dates.staging1.date+'T12:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'})+'</span>':'')+
       '<span class="inv-pill"><span class="inv-dot" style="background:'+ic+'"></span>'+p.invoice+'</span>'+
       '<span style="font-size:11px;color:#aaa">'+p.type+'</span></div>'+
       '<div class="prop-card-bot"><div>'+
       '<div class="prop-card-value">$'+(p.value||0).toLocaleString()+'</div>'+
       (addT?'<div style="font-size:11px;color:#059669;font-weight:500">+$'+addT.toLocaleString()+' add-ons</div>':'')+
-      '<div class="prop-card-agent">'+(p.agency||p.agent||'—')+'</div></div>'+
-      '<div class="prog-row"><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div>'+
-      '<span class="prog-label">'+pct+'%</span></div></div></div>';
+      '<div class="prop-card-agent">'+(p.agency||p.agent||'—')+'</div></div></div></div>';
   }).join('');
 }
 
