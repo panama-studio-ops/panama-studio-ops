@@ -301,10 +301,10 @@ tr.prop-row:hover td{background:#fafaf8}
     <div class="modal-body">
       <div class="ap-grid">
         <div class="ap-fg" style="grid-column:1/-1"><label>Property address</label><input id="ap-addr" placeholder="14 Banksia Rd, Cottesloe"></div>
-        <div class="ap-fg"><label>Agency</label><input id="ap-agency" placeholder="Ray White Cottesloe"></div>
-        <div class="ap-fg"><label>Agent name</label><input id="ap-agent" placeholder="John Smith"></div>
+        <div class="ap-fg"><label>Agency</label><input id="ap-agency" placeholder="Ray White Cottesloe" list="agency-list" oninput="onAgencySelect(this.value)"><datalist id="agency-list"></datalist></div>
+        <div class="ap-fg"><label>Agent name</label><input id="ap-agent" placeholder="John Smith" list="agent-list" oninput="onAgentSelect(this.value)"><datalist id="agent-list"></datalist></div>
         <div class="ap-fg" style="grid-column:1/-1"><label>Agent email</label><input id="ap-agent-email" type="email" placeholder="john@raywhite.com.au"></div>
-        <div class="ap-fg"><label>Client name</label><input id="ap-client" placeholder="Jane Smith"></div>
+        <div class="ap-fg"><label>Client name</label><input id="ap-client" placeholder="Jane Smith" list="client-list" oninput="onClientSelect(this.value)"><datalist id="client-list"></datalist></div>
         <div class="ap-fg"><label>Client email</label><input id="ap-email" type="email" placeholder="jane@email.com"></div>
         <div class="ap-fg"><label>Staging value (ex GST)</label><input id="ap-value" type="number" placeholder="4500"></div>
         <div class="ap-fg"><label>Project type</label><select id="ap-type"><option>Full Stage</option><option>Partial Stage</option><option>Interior Design</option><option>Photo Package - Essential</option><option>Photo Package - Styled</option></select></div>
@@ -364,6 +364,65 @@ function setSyncStatus(state, label) {
 function apiCall(body) {
   return fetch(API, {method:'POST', body: JSON.stringify(body)})
     .then(function(res) { return res.json(); });
+}
+
+function getContacts() {
+  var clients = {}, agents = {}, agencies = {};
+  props.forEach(function(p) {
+    if(p.client && p.email) clients[p.client] = p.email;
+    if(p.agent && p.agentEmail) agents[p.agent] = {email: p.agentEmail, agency: p.agency||''};
+    if(p.agency && p.agent) agencies[p.agency] = {agent: p.agent, email: p.agentEmail||''};
+  });
+  return {clients: clients, agents: agents, agencies: agencies};
+}
+
+function setupAutocomplete() {
+  var c = getContacts();
+  
+  // Client datalist
+  var clientList = document.getElementById('client-list');
+  if(clientList) {
+    clientList.innerHTML = Object.keys(c.clients).map(function(n){
+      return '<option value="'+n+'">';
+    }).join('');
+  }
+  
+  // Agent datalist
+  var agentList = document.getElementById('agent-list');
+  if(agentList) {
+    agentList.innerHTML = Object.keys(c.agents).map(function(n){
+      return '<option value="'+n+'">';
+    }).join('');
+  }
+  
+  // Agency datalist
+  var agencyList = document.getElementById('agency-list');
+  if(agencyList) {
+    agencyList.innerHTML = Object.keys(c.agencies).map(function(n){
+      return '<option value="'+n+'">';
+    }).join('');
+  }
+}
+
+function onClientSelect(val) {
+  var c = getContacts();
+  if(c.clients[val]) document.getElementById('ap-email').value = c.clients[val];
+}
+
+function onAgentSelect(val) {
+  var c = getContacts();
+  if(c.agents[val]) {
+    document.getElementById('ap-agent-email').value = c.agents[val].email||'';
+    if(c.agents[val].agency) document.getElementById('ap-agency').value = c.agents[val].agency;
+  }
+}
+
+function onAgencySelect(val) {
+  var c = getContacts();
+  if(c.agencies[val]) {
+    document.getElementById('ap-agent').value = c.agencies[val].agent||'';
+    document.getElementById('ap-agent-email').value = c.agencies[val].email||'';
+  }
 }
 
 function loadAll() {
@@ -462,7 +521,7 @@ function renderPipeline() {
     if(['Lead Only','Proposal Request','Proposal Sent'].includes(p.status)) leadsVal += total;
     if(p.status==='Accepted/Planning') committedVal += total;
     if(p.status==='Live Staging') liveVal += total;
-    if(p.status !== 'Demobilise/Complete') activeCount++;
+    if(p.status === 'Accepted/Planning' || p.status === 'Live Staging') activeCount++;
   });
   document.getElementById('m-leads').textContent     = '$' + leadsVal.toLocaleString();
   document.getElementById('m-committed').textContent = '$' + committedVal.toLocaleString();
@@ -857,7 +916,7 @@ function buildApDateFields(){
       '</div></div>';
   }).join('');
 }
-function openAddModal(){document.getElementById('ap-dates-container').innerHTML=buildApDateFields();document.getElementById('add-overlay').classList.add('open');}
+function openAddModal(){document.getElementById('ap-dates-container').innerHTML=buildApDateFields();setupAutocomplete();document.getElementById('add-overlay').classList.add('open');}
 function saveNewProp(){
   var addr=document.getElementById('ap-addr').value.trim();
   var client=document.getElementById('ap-client').value.trim();
