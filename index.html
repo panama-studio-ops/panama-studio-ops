@@ -373,7 +373,11 @@ function getContacts() {
   props.forEach(function(p) {
     if(p.client) clients[p.client] = {email: p.email||'', phone: p.clientPhone||''};
     if(p.agent) agents[p.agent] = {email: p.agentEmail||'', phone: p.agentPhone||'', agency: p.agency||''};
-    if(p.agency && p.agent) agencies[p.agency] = {agent: p.agent, email: p.agentEmail||'', phone: p.agentPhone||''};
+    if(p.agency && p.agent) {
+      if(!agencies[p.agency]) agencies[p.agency] = [];
+      var exists = agencies[p.agency].find(function(a){ return a.agent===p.agent; });
+      if(!exists) agencies[p.agency].push({agent: p.agent, email: p.agentEmail||'', phone: p.agentPhone||''});
+    }
   });
   return {clients: clients, agents: agents, agencies: agencies};
 }
@@ -404,6 +408,9 @@ function setupAutocomplete() {
       return '<option value="'+n+'">';
     }).join('');
   }
+  
+  // Store contacts globally for access in onAgencySelect
+  window._contacts = c;
 }
 
 function onClientSelect(val) {
@@ -425,10 +432,24 @@ function onAgentSelect(val) {
 
 function onAgencySelect(val) {
   var c = getContacts();
-  if(c.agencies[val]) {
-    document.getElementById('ap-agent').value = c.agencies[val].agent||'';
-    document.getElementById('ap-agent-email').value = c.agencies[val].email||'';
-    document.getElementById('ap-agent-phone').value = c.agencies[val].phone||'';
+  if(c.agencies[val] && c.agencies[val].length > 0) {
+    // Update agent datalist to only show agents from this agency
+    var agentList = document.getElementById('agent-list');
+    if(agentList) {
+      agentList.innerHTML = c.agencies[val].map(function(a){
+        return '<option value="'+a.agent+'">';
+      }).join('');
+    }
+    // If only one agent auto-fill, otherwise clear and let them pick
+    if(c.agencies[val].length === 1) {
+      document.getElementById('ap-agent').value = c.agencies[val][0].agent||'';
+      document.getElementById('ap-agent-email').value = c.agencies[val][0].email||'';
+      document.getElementById('ap-agent-phone').value = c.agencies[val][0].phone||'';
+    } else {
+      document.getElementById('ap-agent').value = '';
+      document.getElementById('ap-agent-email').value = '';
+      document.getElementById('ap-agent-phone').value = '';
+    }
   }
 }
 
