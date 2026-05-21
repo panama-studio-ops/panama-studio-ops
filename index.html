@@ -128,7 +128,7 @@ tr.prop-row:hover td{background:#fafaf8}
 .conf-dot{width:6px;height:6px;border-radius:50%}
 .conf-toggle.confirmed .conf-dot{background:#059669}
 .conf-toggle.tentative .conf-dot{background:#D97706}
-.date-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.date-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px}
 .date-field-group label{font-size:10px;color:#aaa;display:block;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
 .date-field-group input{width:100%;padding:6px 8px;font-size:12px;border:1px solid #e8e6e0;border-radius:7px;background:#fafaf8;color:#1a1a1a;font-family:inherit;outline:none}
 .date-field-group input:focus{border-color:#1a1a1a;background:#fff}
@@ -622,10 +622,7 @@ function renderDetailBody(p) {
       '<div class="date-field-group"><label>Start time</label><input type="time" value="'+(d.startTime||'09:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'startTime\',this.value)"></div>'+
       '<div class="date-field-group"><label>End time</label><input type="time" value="'+(d.endTime||'17:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'endTime\',this.value)"></div>'+
       '</div>'+
-      '<div class="assign-box">'+
-      '<div class="assign-label">Who is assigned</div>'+
-      '<textarea class="assign-input" rows="2" placeholder="e.g. Kylie, Sam..." onchange="updateDateField('+p.id+',\''+dt.key+'\',\'assigned\',this.value)">'+(d.assigned||'')+'</textarea>'+
-      '</div>'+
+      '<div class="date-field-group" style="margin-bottom:8px"><label>Assigned</label><input type="text" value="'+(d.assigned||'')+'" placeholder="e.g. Kylie, Sam..." onchange="updateDateField('+p.id+',\''+dt.key+'\',\'assigned\',this.value)"></div>'+
       '<div style="margin-top:6px;display:flex;align-items:center;gap:8px">'+
       (d.date
         ? '<button class="gcal-btn '+(d.calendarEventId?'confirmed':'tentative')+'" onclick="syncToCalendar(props.find(function(x){return x.id==='+p.id+'}),&quot;'+dt.key+'&quot;)">&#128197; '+(d.calendarEventId?'Update Calendar':'Sync to Calendar')+'</button>'
