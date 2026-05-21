@@ -62,10 +62,6 @@ tr.prop-row:hover td{background:#fafaf8}
 .prop-card-bot{display:flex;align-items:center;justify-content:space-between}
 .prop-card-value{font-size:14px;font-weight:700;color:#1a1a1a}
 .prop-card-agent{font-size:11px;color:#aaa}
-.prog-row{display:flex;align-items:center;gap:6px}
-.prog-bar{height:4px;background:#eee;border-radius:2px;overflow:hidden;width:60px}
-.prog-fill{height:100%;background:#1D9E75;border-radius:2px}
-.prog-label{font-size:11px;color:#aaa;font-weight:500}
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .s-lead{background:#f0ede8;color:#666}
 .s-preq{background:#FEF3E2;color:#92400E}
@@ -139,6 +135,10 @@ tr.prop-row:hover td{background:#fafaf8}
 .cal-status.synced{background:#ECFDF5;color:#065F46}
 .cal-status.tentative{background:#FFFBEB;color:#92400E}
 .cal-status.pending{background:#f5f4f1;color:#999}
+.assign-box{background:#f8f7f5;border:1px solid #e8e6e0;border-radius:8px;padding:8px 10px;margin-top:8px}
+.assign-label{font-size:10px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.assign-input{width:100%;padding:6px 8px;font-size:12px;border:1px solid #e8e6e0;border-radius:6px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none;resize:none}
+.assign-input:focus{border-color:#1a1a1a}
 .cl-phase{margin-bottom:14px}
 .cl-phase-hd{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:#333;margin-bottom:8px}
 .cl-phase-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
@@ -201,6 +201,10 @@ tr.prop-row:hover td{background:#fafaf8}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{text-align:center;padding:40px 20px;color:#bbb}
 .empty-icon{font-size:36px;margin-bottom:12px}
+.gcal-btn{display:flex;align-items:center;justify-content:center;gap:5px;padding:6px 12px;font-size:11px;font-weight:600;border-radius:7px;border:1.5px solid;cursor:pointer;text-decoration:none;transition:all .15s;width:100%;margin-top:2px;background:none;font-family:inherit}
+.gcal-btn.confirmed{border-color:#A7F3D0;background:#ECFDF5;color:#065F46}
+.gcal-btn.tentative{border-color:#FDE68A;background:#FFFBEB;color:#92400E}
+.gcal-btn.disabled{border-color:#e0deda;background:#fafaf8;color:#bbb;cursor:default;pointer-events:none}
 </style>
 </head>
 <body>
@@ -227,7 +231,7 @@ tr.prop-row:hover td{background:#fafaf8}
     <div class="metric"><div class="metric-label">Leads pipeline</div><div class="metric-value" id="m-leads">—</div><div style="font-size:11px;color:#aaa;margin-top:2px">Lead, Proposal Request, Sent</div></div>
     <div class="metric"><div class="metric-label">Accepted pipeline</div><div class="metric-value" style="color:#5B21B6" id="m-committed">—</div><div style="font-size:11px;color:#aaa;margin-top:2px">Accepted / Planning</div></div>
     <div class="metric"><div class="metric-label">Live (in the bank)</div><div class="metric-value green" id="m-live">—</div><div style="font-size:11px;color:#aaa;margin-top:2px">Live Staging</div></div>
-    <div class="metric"><div class="metric-label">Total active jobs</div><div class="metric-value" id="m-total">—</div><div style="font-size:11px;color:#aaa;margin-top:2px">Excl. complete</div></div>
+    <div class="metric"><div class="metric-label">Total active jobs</div><div class="metric-value" id="m-total">—</div><div style="font-size:11px;color:#aaa;margin-top:2px">Accepted/Planning &amp; Live</div></div>
   </div>
   <div class="section-header">
     <div style="display:flex;align-items:center;gap:10px">
@@ -248,7 +252,7 @@ tr.prop-row:hover td{background:#fafaf8}
         <th style="width:22%">Property address</th>
         <th style="width:11%">Agency</th>
         <th style="width:9%">Agent</th>
-        <th style="width:9%">Client</th>
+        <th style="width:9%">Vendor</th>
         <th style="width:11%">Status</th>
         <th style="width:8%">Stage</th>
         <th style="width:8%">Type</th>
@@ -336,13 +340,14 @@ tr.prop-row:hover td{background:#fafaf8}
 const API = 'https://script.google.com/macros/s/AKfycbyN5TH8LHr6qCbmpyR0gcd4agsJ1Pz19D8RLlf-cfhU_dztvhN4b0ClLnUWAEuv3wYp/exec';
 
 const DATE_TYPES = [
-  {key:'staging1',  label:'Staging Day 1',  cls:'dt-staging',   singleDay:true},
-  {key:'staging2',  label:'Staging Day 2',  cls:'dt-staging',   singleDay:true},
-  {key:'pack',      label:'Pick & pack',    cls:'dt-pack',      singleDay:true},
-  {key:'logistics', label:'Logistics team', cls:'dt-logistics', singleDay:true},
-  {key:'photo',     label:'Photography',    cls:'dt-photo',     singleDay:true},
-  {key:'destage',   label:'Destage',        cls:'dt-destage',   singleDay:true}
+  {key:'staging1',  label:'Staging Day 1',       cls:'dt-staging',   singleDay:true},
+  {key:'staging2',  label:'Staging Day 2',       cls:'dt-staging',   singleDay:true},
+  {key:'pack',      label:'Planning/Pick/Pack',  cls:'dt-pack',      singleDay:true},
+  {key:'logistics', label:'Logistics team',      cls:'dt-logistics', singleDay:true},
+  {key:'photo',     label:'Photography',         cls:'dt-photo',     singleDay:true},
+  {key:'destage',   label:'Destage',             cls:'dt-destage',   singleDay:true}
 ];
+
 const CHECKLIST_PHASES = [
   {id:'prebook',    label:'Pre-booking', color:'#D97706', items:['Proposal sent','XERO updated with client info & budget forecast']},
   {id:'preinstall', label:'Pre-install',  color:'#2563EB', items:['Working brief produced (floor plan, inventory etc)','Logistics team booked','XERO updated with email template automation','Pickers and packers booked']},
@@ -350,7 +355,6 @@ const CHECKLIST_PHASES = [
 ];
 const STATUS_CLASS = {'Lead Only':'s-lead','Proposal Request':'s-preq','Proposal Sent':'s-psent','Accepted/Planning':'s-plan','Live Staging':'s-live','Demobilise/Complete':'s-done'};
 const INV_COLORS   = {'Not sent':'#C4C2BB','Sent':'#D97706','Deposit received':'#059669','Final payment received':'#1D4ED8'};
-const ACTIVE_STATUSES = ['Accepted/Planning','Live Staging'];
 
 let props = [];
 let TEAM  = ['Unassigned'];
@@ -384,33 +388,12 @@ function getContacts() {
 
 function setupAutocomplete() {
   var c = getContacts();
-  
-  // Client datalist
   var clientList = document.getElementById('client-list');
-  if(clientList) {
-    clientList.innerHTML = Object.keys(c.clients).map(function(n){
-      return '<option value="'+n+'">';
-    }).join('');
-  }
-  
-  // Agent datalist
+  if(clientList) clientList.innerHTML = Object.keys(c.clients).map(function(n){ return '<option value="'+n+'">'; }).join('');
   var agentList = document.getElementById('agent-list');
-  if(agentList) {
-    agentList.innerHTML = Object.keys(c.agents).map(function(n){
-      return '<option value="'+n+'">';
-    }).join('');
-  }
-  
-  // Agency datalist
+  if(agentList) agentList.innerHTML = Object.keys(c.agents).map(function(n){ return '<option value="'+n+'">'; }).join('');
   var agencyList = document.getElementById('agency-list');
-  if(agencyList) {
-    agencyList.innerHTML = Object.keys(c.agencies).map(function(n){
-      return '<option value="'+n+'">';
-    }).join('');
-  }
-  
-  // Store contacts globally for access in onAgencySelect
-  window._contacts = c;
+  if(agencyList) agencyList.innerHTML = Object.keys(c.agencies).map(function(n){ return '<option value="'+n+'">'; }).join('');
 }
 
 function onClientSelect(val) {
@@ -433,14 +416,8 @@ function onAgentSelect(val) {
 function onAgencySelect(val) {
   var c = getContacts();
   if(c.agencies[val] && c.agencies[val].length > 0) {
-    // Update agent datalist to only show agents from this agency
     var agentList = document.getElementById('agent-list');
-    if(agentList) {
-      agentList.innerHTML = c.agencies[val].map(function(a){
-        return '<option value="'+a.agent+'">';
-      }).join('');
-    }
-    // If only one agent auto-fill, otherwise clear and let them pick
+    if(agentList) agentList.innerHTML = c.agencies[val].map(function(a){ return '<option value="'+a.agent+'">'; }).join('');
     if(c.agencies[val].length === 1) {
       document.getElementById('ap-agent').value = c.agencies[val][0].agent||'';
       document.getElementById('ap-agent-email').value = c.agencies[val][0].email||'';
@@ -475,7 +452,6 @@ function syncToCalendar(p, dateKey) {
   setSyncStatus('syncing', 'Syncing...');
   var statusEl = document.getElementById('cal-status-'+p.id+'-'+dateKey);
   if(statusEl) statusEl.textContent = 'Syncing...';
-  // Delete old event first if exists
   var oldEventId = p.dates[dateKey].calendarEventId;
   var doSync = function() {
     apiCall({action:'syncCalendar', prop:p, dateKey:dateKey})
@@ -483,9 +459,8 @@ function syncToCalendar(p, dateKey) {
         if(result && result.eventId) {
           p.dates[dateKey].calendarEventId = result.eventId;
           savePropToServer(p);
-          setSyncStatus('ok', 'Calendar synced ✓');
-          if(statusEl) statusEl.textContent = '✓ Synced';
-          // Update button
+          setSyncStatus('ok', 'Calendar synced \u2713');
+          if(statusEl) statusEl.textContent = '\u2713 Synced';
           renderDetailBody(p);
         } else {
           setSyncStatus('error', 'Sync failed');
@@ -498,7 +473,6 @@ function syncToCalendar(p, dateKey) {
       });
   };
   if(oldEventId) {
-    // Delete old event first then create fresh
     p.dates[dateKey].calendarEventId = null;
     apiCall({action:'deleteCalendarEvent', eventId:oldEventId})
       .then(function() { doSync(); })
@@ -523,36 +497,21 @@ function svgTick() { return '<svg width="10" height="8" viewBox="0 0 10 8"><path
 
 function makeEmptyChecklist() {
   var c = {};
-  CHECKLIST_PHASES.forEach(function(ph) { c[ph.id] = new Array(ph.items.length).fill(false); });
-  c.customItems = []; c.customChecked = [];
+  CHECKLIST_PHASES.forEach(function(ph) {
+    c[ph.id] = new Array(ph.items.length).fill(false);
+    c[ph.id+'_custom'] = [];
+    c[ph.id+'_customChecked'] = [];
+  });
   return c;
 }
 
 function clPct(p) {
   var tot = 0, done = 0;
-  CHECKLIST_PHASES.forEach(function(ph) { p.checklist[ph.id].forEach(function(v) { tot++; if(v) done++; }); });
-  (p.checklist.customChecked || []).forEach(function(v) { tot++; if(v) done++; });
+  CHECKLIST_PHASES.forEach(function(ph) {
+    (p.checklist[ph.id]||[]).forEach(function(v) { tot++; if(v) done++; });
+    (p.checklist[ph.id+'_customChecked']||[]).forEach(function(v) { tot++; if(v) done++; });
+  });
   return tot ? Math.round(done / tot * 100) : 0;
-}
-
-function syncToCalendar(p, dateKey) {
-  apiCall({action:'syncCalendar', prop:p, dateKey:dateKey})
-    .then(function(result) {
-      if(result && result.eventId) {
-        p.dates[dateKey].calendarEventId = result.eventId;
-        savePropToServer(p);
-        setSyncStatus('ok', 'Calendar synced \u2713');
-        // Update the cal status indicator in the open card
-        var el = document.getElementById('cal-status-'+p.id+'-'+dateKey);
-        if(el) {
-          el.className = 'cal-status ' + (p.dates[dateKey].confirmed ? 'synced' : 'tentative');
-          el.textContent = '\u2713 ' + (p.dates[dateKey].confirmed ? 'Confirmed' : 'Tentative') + ' \u2014 synced to Outlook';
-        }
-      } else {
-        setSyncStatus('ok', 'Saved');
-      }
-    })
-    .catch(function() { setSyncStatus('ok', 'Saved'); });
 }
 
 function renderPipeline() {
@@ -576,7 +535,7 @@ function renderPipeline() {
 
   if (!filtered.length) {
     var empty = '<div class="empty"><div class="empty-icon">&#127968;</div><p>No properties yet — tap "+ New" to get started.</p></div>';
-    document.getElementById('prop-tbody').innerHTML = '<tr><td colspan="10">' + empty + '</td></tr>';
+    document.getElementById('prop-tbody').innerHTML = '<tr><td colspan="11">' + empty + '</td></tr>';
     document.getElementById('mobile-cards').innerHTML = empty;
     return;
   }
@@ -602,12 +561,11 @@ function renderPipeline() {
   document.getElementById('mobile-cards').innerHTML = filtered.map(function(p) {
     var sc = STATUS_CLASS[p.status] || 's-lead';
     var ic = INV_COLORS[p.invoice]  || '#C4C2BB';
-    var pct = clPct(p);
     var addT = (p.addons||[]).reduce(function(s,a){return s+(parseFloat(a.value)||0);},0);
     return '<div class="prop-card" onclick="openDetail('+p.id+')">'+
       '<div class="prop-card-top"><div>'+
       '<div class="prop-card-addr">'+p.address+'</div>'+
-      '<div class="prop-card-client">'+p.client+'</div></div>'+
+      '<div class="prop-card-client">'+(p.client||'')+'</div></div>'+
       '<span class="badge '+sc+'">'+p.status+'</span></div>'+
       '<div class="prop-card-mid">'+
       (p.dates&&p.dates.staging1&&p.dates.staging1.date?'<span style="font-size:11px;color:#065F46;font-weight:600">Stage: '+new Date(p.dates.staging1.date+'T12:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'})+'</span>':'')+
@@ -630,7 +588,7 @@ function setFilter(f, el) {
 function openDetail(id) {
   var p = props.find(function(x){ return x.id===id; }); if(!p) return;
   document.getElementById('dm-title').textContent = p.address;
-  document.getElementById('dm-sub').textContent   = p.client+(p.email?' · '+p.email:'')+(p.agency?' · '+p.agency:'')+(p.agent?' · '+p.agent:'');
+  document.getElementById('dm-sub').textContent   = (p.agency||'')+(p.agent?' · '+p.agent:'')+(p.client?' · Vendor: '+p.client:'');
   document.getElementById('dm-delete-btn').onclick = function(){ deleteProp(id); };
   renderDetailBody(p);
   document.getElementById('detail-overlay').classList.add('open');
@@ -649,16 +607,9 @@ function deleteProp(id) {
 
 function renderDetailBody(p) {
   var datesHtml = DATE_TYPES.map(function(dt) {
-    var d = p.dates[dt.key] || {date:'',startTime:'09:00',endTime:'17:00',endDate:'',confirmed:false};
+    var d = p.dates[dt.key] || {date:'',startTime:'09:00',endTime:'17:00',confirmed:false,assigned:''};
     var conf = d.confirmed;
     var tc = conf ? 'confirmed' : 'tentative';
-    var hasCal = !!d.calendarEventId;
-    var calLabel = d.date
-      ? (hasCal
-          ? '\u2713 '+(conf?'Confirmed':'Tentative')+' \u2014 synced to Outlook'
-          : (conf?'Confirmed':'Tentative')+' \u2014 syncing to Outlook...')
-      : 'Enter date to sync to Outlook calendar';
-    var calClass = d.date ? (conf ? 'synced' : 'tentative') : 'pending';
     return '<div class="date-card">'+
       '<div class="date-card-top">'+
       '<span class="date-type-label '+dt.cls+'">'+dt.label+'</span>'+
@@ -667,24 +618,27 @@ function renderDetailBody(p) {
       '<div class="date-fields">'+
       '<div class="date-field-group"><label>Date</label><input type="date" value="'+(d.date||'')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'date\',this.value)"></div>'+
       '<div class="date-field-group"><label>Start time</label><input type="time" value="'+(d.startTime||'09:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'startTime\',this.value)"></div>'+
-      (!dt.singleDay ? '<div class="date-field-group"><label>End date</label><input type="date" value="'+(d.endDate||d.date||'')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'endDate\',this.value)"></div>' : '')+
       '<div class="date-field-group"><label>End time</label><input type="time" value="'+(d.endTime||'17:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'endTime\',this.value)"></div>'+
+      '</div>'+
+      '<div class="assign-box">'+
+      '<div class="assign-label">Who is assigned</div>'+
+      '<textarea class="assign-input" rows="2" placeholder="e.g. Kylie, Sam..." onchange="updateDateField('+p.id+',\''+dt.key+'\',\'assigned\',this.value)">'+(d.assigned||'')+'</textarea>'+
       '</div>'+
       '<div style="margin-top:6px;display:flex;align-items:center;gap:8px">'+
       (d.date
         ? '<button class="gcal-btn '+(d.calendarEventId?'confirmed':'tentative')+'" onclick="syncToCalendar(props.find(function(x){return x.id==='+p.id+'}),&quot;'+dt.key+'&quot;)">&#128197; '+(d.calendarEventId?'Update Calendar':'Sync to Calendar')+'</button>'
         : '<span class="gcal-btn disabled">&#128197; Sync to Calendar</span>')+
-      '<span style="font-size:10px;color:#bbb" id="cal-status-'+p.id+'-'+dt.key+'">'+(d.calendarEventId?'✓ Synced':'Not synced')+'</span>'+
+      '<span style="font-size:10px;color:#bbb" id="cal-status-'+p.id+'-'+dt.key+'">'+(d.calendarEventId?'\u2713 Synced':'Not synced')+'</span>'+
       '</div>'+
       '</div>';
   }).join('');
 
+  // CHECKLIST - all phases allow custom items
   var clHtml = CHECKLIST_PHASES.map(function(ph) {
-    var isD = ph.id==='destage';
-    var custI = isD?(p.checklist.customItems||[]):[];
-    var custC = isD?(p.checklist.customChecked||[]):[];
+    var custI = p.checklist[ph.id+'_custom'] || (ph.id==='destage' ? (p.checklist.customItems||[]) : []);
+    var custC = p.checklist[ph.id+'_customChecked'] || (ph.id==='destage' ? (p.checklist.customChecked||[]) : []);
     var allI = ph.items.concat(custI);
-    var allC = p.checklist[ph.id].concat(custC);
+    var allC = (p.checklist[ph.id]||[]).concat(custC);
     return '<div class="cl-phase">'+
       '<div class="cl-phase-hd"><div class="cl-phase-dot" style="background:'+ph.color+'"></div>'+ph.label+'</div>'+
       allI.map(function(item,i){
@@ -694,7 +648,9 @@ function renderDetailBody(p) {
           '<div class="cl-cb '+(allC[i]?'done':'')+'" onclick="toggleCl('+p.id+',\''+ph.id+'\','+i+')">'+(allC[i]?svgTick():'')+  '</div>'+
           '<span class="cl-label '+(allC[i]?'done':'')+'">'+item+'</span></div>';
       }).join('')+
-      (isD?'<div class="add-row" style="margin-top:8px"><input id="cl-add-'+p.id+'" placeholder="Add checklist item..." onkeydown="if(event.key===\'Enter\')addClItem('+p.id+')"><button onclick="addClItem('+p.id+')">+ Add</button></div>':'')+
+      '<div class="add-row" style="margin-top:8px">'+
+      '<input id="cl-add-'+p.id+'-'+ph.id+'" placeholder="Add item..." onkeydown="if(event.key===\'Enter\')addClItem('+p.id+',\''+ph.id+'\')">'+
+      '<button onclick="addClItem('+p.id+',\''+ph.id+'\')">+ Add</button></div>'+
       '</div>';
   }).join('');
 
@@ -742,7 +698,7 @@ function renderDetailBody(p) {
     '<div class="fg"><label>Agency</label><input id="e-agency-'+p.id+'" value="'+(p.agency||'')+'"></div>'+
     '<div class="fg"><label>Agent name</label><input id="e-agent-'+p.id+'" value="'+(p.agent||'')+'"></div>'+
     '<div class="fg" style="grid-column:1/-1"><label>Agent email</label><input id="e-agent-email-'+p.id+'" value="'+(p.agentEmail||'')+'"></div>'+
-    '<div class="fg"><label>Important info</label><input id="e-key-'+p.id+'" value="'+(p.key||'')+'"></div>'+
+    '<div class="fg" style="grid-column:1/-1"><label>Important info</label><input id="e-key-'+p.id+'" value="'+(p.key||'')+'"></div>'+
     '</div>'+
     '<div style="display:flex;gap:8px">'+
     '<button onclick="saveEditProp('+p.id+')" style="flex:1;padding:9px;font-size:13px;font-weight:700;background:#1a1a1a;color:#fff;border:none;border-radius:9px;cursor:pointer">Save changes</button>'+
@@ -779,13 +735,16 @@ function renderDetailBody(p) {
     '<div class="detail-grid" style="margin-top:8px">'+
     '<div class="detail-box"><div class="detail-lbl">Agency</div><div class="detail-val" style="font-size:13px">'+(p.agency||'—')+'</div></div>'+
     '<div class="detail-box"><div class="detail-lbl">Agent</div><div class="detail-val" style="font-size:13px">'+(p.agent||'—')+'</div></div>'+
+    (p.agentPhone?'<div class="detail-box"><div class="detail-lbl">Agent phone</div><div class="detail-val" style="font-size:13px"><a href="tel:'+p.agentPhone+'" style="color:#1E40AF">'+p.agentPhone+'</a></div></div>':'')+
     (p.agentEmail?'<div class="detail-box" style="grid-column:1/-1"><div class="detail-lbl">Agent email</div><div class="detail-val" style="font-size:13px"><a href="mailto:'+p.agentEmail+'" style="color:#1E40AF">'+p.agentEmail+'</a></div></div>':'')+
+    '<div class="detail-box"><div class="detail-lbl">Vendor</div><div class="detail-val" style="font-size:13px">'+(p.client||'—')+'</div></div>'+
+    (p.clientPhone?'<div class="detail-box"><div class="detail-lbl">Vendor phone</div><div class="detail-val" style="font-size:13px"><a href="tel:'+p.clientPhone+'" style="color:#1E40AF">'+p.clientPhone+'</a></div></div>':'')+
+    (p.email?'<div class="detail-box" style="grid-column:1/-1"><div class="detail-lbl">Vendor email</div><div class="detail-val" style="font-size:13px"><a href="mailto:'+p.email+'" style="color:#1E40AF">'+p.email+'</a></div></div>':'')+
     '</div>'+
     (p.key?'<div class="key-box">&#128274; '+p.key+'</div>':'')+
     '</div>'+
 
     '<div class="m-sec"><div class="m-sec-title">Key dates</div><div class="dates-grid">'+datesHtml+'</div></div>'+
-    '<div class="m-sec"><div class="m-sec-title">Checklist</div>'+clHtml+'</div>'+
 
     '<div class="m-sec"><div class="m-sec-title">Tasks &amp; assignments</div>'+
     '<div id="tasks-'+p.id+'">'+tasksHtml+'</div>'+
@@ -793,6 +752,8 @@ function renderDetailBody(p) {
     '<input id="ti-'+p.id+'" placeholder="Add a task..." onkeydown="if(event.key===\'Enter\')addTask('+p.id+')">'+
     '<select id="ta-'+p.id+'">'+TEAM.map(function(t){return '<option>'+t+'</option>';}).join('')+'</select>'+
     '<button onclick="addTask('+p.id+')">Add</button></div></div>'+
+
+    '<div class="m-sec"><div class="m-sec-title">Checklist</div>'+clHtml+'</div>'+
 
     '<div class="m-sec"><div class="m-sec-title">Files &amp; links</div>'+
     '<div id="fl-'+p.id+'">'+fileLinksHtml+'</div>'+
@@ -812,9 +773,9 @@ function updateProp(id,field,val){var p=props.find(function(x){return x.id===id;
 
 function updateDateField(id,key,field,val){
   var p=props.find(function(x){return x.id===id;});if(!p)return;
-  if(!p.dates[key])p.dates[key]={date:'',startTime:'09:00',endTime:'17:00',endDate:'',confirmed:false};
+  if(!p.dates[key])p.dates[key]={date:'',startTime:'09:00',endTime:'17:00',confirmed:false,assigned:''};
   p.dates[key][field]=val;
-  savePropToServer(p); renderDetailBody(p);
+  savePropToServer(p);
 }
 
 function toggleConf(id,key){
@@ -828,7 +789,7 @@ function toggleEdit(pid){var s=document.getElementById('edit-sec-'+pid);if(!s)re
 function saveEditProp(pid){
   var p=props.find(function(x){return x.id===pid;});if(!p)return;
   p.address=document.getElementById('e-addr-'+pid).value.trim()||p.address;
-  p.client=document.getElementById('e-client-'+pid).value.trim()||p.client;
+  p.client=document.getElementById('e-client-'+pid).value.trim();
   p.email=document.getElementById('e-email-'+pid).value.trim();
   p.agency=document.getElementById('e-agency-'+pid).value.trim();
   p.agent=document.getElementById('e-agent-'+pid).value.trim();
@@ -843,15 +804,27 @@ function saveEditProp(pid){
 function toggleCl(pid,phase,idx){
   var p=props.find(function(x){return x.id===pid;});if(!p)return;
   var bl=CHECKLIST_PHASES.find(function(x){return x.id===phase;}).items.length;
-  if(phase==='destage'&&idx>=bl){var ci=idx-bl;if(!p.checklist.customChecked)p.checklist.customChecked=[];p.checklist.customChecked[ci]=!p.checklist.customChecked[ci];}
-  else{p.checklist[phase][idx]=!p.checklist[phase][idx];}
+  if(idx>=bl){
+    var ci=idx-bl;
+    var key=phase+'_customChecked';
+    if(!p.checklist[key])p.checklist[key]=[];
+    p.checklist[key][ci]=!p.checklist[key][ci];
+  } else {
+    p.checklist[phase][idx]=!p.checklist[phase][idx];
+  }
   savePropToServer(p);renderDetailBody(p);renderPipeline();
 }
-function addClItem(pid){
+
+function addClItem(pid,phase){
   var p=props.find(function(x){return x.id===pid;});if(!p)return;
-  var inp=document.getElementById('cl-add-'+pid);var txt=inp.value.trim();if(!txt)return;
-  if(!p.checklist.customItems)p.checklist.customItems=[];if(!p.checklist.customChecked)p.checklist.customChecked=[];
-  p.checklist.customItems.push(txt);p.checklist.customChecked.push(false);
+  var inp=document.getElementById('cl-add-'+pid+'-'+phase);
+  var txt=inp.value.trim();if(!txt)return;
+  var customKey=phase+'_custom';
+  var checkedKey=phase+'_customChecked';
+  if(!p.checklist[customKey])p.checklist[customKey]=[];
+  if(!p.checklist[checkedKey])p.checklist[checkedKey]=[];
+  p.checklist[customKey].push(txt);
+  p.checklist[checkedKey].push(false);
   inp.value='';savePropToServer(p);renderDetailBody(p);renderPipeline();
 }
 
@@ -867,14 +840,19 @@ function clDrop(e){
   if(target.dataset.phase!==phase)return;
   var p=props.find(function(x){return x.id===pid;});if(!p)return;
   var bl=CHECKLIST_PHASES.find(function(x){return x.id===phase;}).items.length;
-  if(phase==='destage'&&fi>=bl&&ti>=bl){
-    var ci=fi-bl,ci2=ti-bl;var items=p.checklist.customItems||[];var chkd=p.checklist.customChecked||[];
-    var it=items.splice(ci,1)[0];items.splice(ci2,0,it);var ch=chkd.splice(ci,1)[0];chkd.splice(ci2,0,ch);
-    p.checklist.customItems=items;p.checklist.customChecked=chkd;
-  }else if(fi<bl&&ti<bl){
+  var customKey=phase+'_custom';
+  var checkedKey=phase+'_customChecked';
+  if(fi>=bl&&ti>=bl){
+    var ci=fi-bl,ci2=ti-bl;
+    var items=p.checklist[customKey]||[];var chkd=p.checklist[checkedKey]||[];
+    var it=items.splice(ci,1)[0];items.splice(ci2,0,it);
+    var ch=chkd.splice(ci,1)[0];chkd.splice(ci2,0,ch);
+    p.checklist[customKey]=items;p.checklist[checkedKey]=chkd;
+  } else if(fi<bl&&ti<bl){
     var ph=CHECKLIST_PHASES.find(function(x){return x.id===phase;});
     var pitems=ph.items.slice();var pchkd=p.checklist[phase].slice();
-    var pit=pitems.splice(fi,1)[0];pitems.splice(ti,0,pit);var pch=pchkd.splice(fi,1)[0];pchkd.splice(ti,0,pch);
+    var pit=pitems.splice(fi,1)[0];pitems.splice(ti,0,pit);
+    var pch=pchkd.splice(fi,1)[0];pchkd.splice(ti,0,pch);
     ph.items=pitems;p.checklist[phase]=pchkd;
   }
   dragSrc=null;savePropToServer(p);renderDetailBody(p);
@@ -931,11 +909,11 @@ function addAddon(pid){
 function removeAddon(pid,idx){var p=props.find(function(x){return x.id===pid;});if(!p||!p.addons)return;p.addons.splice(idx,1);savePropToServer(p);renderDetailBody(p);renderPipeline();}
 
 function exportToCSV(){
-  var headers=['Property Address','Client','Client Email','Agency','Agent','Agent Email','Type','Status','Invoice','Staging Value','Add-ons Total','Total Value','Staging Day 1','Staging Day 2','Pick & Pack Day 1','Pick & Pack Day 2','Logistics Date','Photography Date','Destage Day 1','Destage Day 2'];
+  var headers=['Property Address','Vendor','Vendor Email','Agency','Agent','Agent Email','Type','Status','Invoice','Staging Value','Add-ons Total','Total Value','Staging Day 1','Staging Day 2','Planning/Pick/Pack','Logistics Date','Photography Date','Destage Date'];
   var rows=props.map(function(p){
     var addT=(p.addons||[]).reduce(function(s,a){return s+(parseFloat(a.value)||0);},0);
     var fmtDate=function(key){return p.dates&&p.dates[key]&&p.dates[key].date?p.dates[key].date:'';};
-    return [p.address||'',p.client||'',p.email||'',p.agency||'',p.agent||'',p.agentEmail||'',p.type||'',p.status||'',p.invoice||'',p.value||0,addT,(p.value||0)+addT,fmtDate('staging'),fmtDate('pack'),fmtDate('logistics'),fmtDate('photo'),fmtDate('destage')].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';});
+    return [p.address||'',p.client||'',p.email||'',p.agency||'',p.agent||'',p.agentEmail||'',p.type||'',p.status||'',p.invoice||'',p.value||0,addT,(p.value||0)+addT,fmtDate('staging1'),fmtDate('staging2'),fmtDate('pack'),fmtDate('logistics'),fmtDate('photo'),fmtDate('destage')].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';});
   });
   var csv=[headers.map(function(h){return '"'+h+'"';}).join(',')].concat(rows.map(function(r){return r.join(',');})).join('\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);
@@ -957,26 +935,26 @@ function buildApDateFields(){
       '<div class="ap-date-grid">'+
       '<div class="ap-date-fg"><label>Date</label><input id="ap-d-'+dt.key+'-date" type="date"></div>'+
       '<div class="ap-date-fg"><label>Start time</label><input id="ap-d-'+dt.key+'-start" type="time" value="09:00"></div>'+
-      (!dt.singleDay?'<div class="ap-date-fg"><label>End date</label><input id="ap-d-'+dt.key+'-end" type="date"></div>':'')+
       '<div class="ap-date-fg"><label>End time</label><input id="ap-d-'+dt.key+'-etime" type="time" value="17:00"></div>'+
       '<label class="conf-check"><input type="checkbox" id="ap-d-'+dt.key+'-conf"> Confirmed</label>'+
       '</div></div>';
   }).join('');
 }
+
 function openAddModal(){document.getElementById('ap-dates-container').innerHTML=buildApDateFields();setupAutocomplete();document.getElementById('add-overlay').classList.add('open');}
+
 function saveNewProp(){
   var addr=document.getElementById('ap-addr').value.trim();
+  if(!addr){alert('Please enter a property address.');return;}
   var client=document.getElementById('ap-client').value.trim();
-  if(!addr||!client){alert('Please enter a property address and client name.');return;}
   var dates={};
   DATE_TYPES.forEach(function(dt){
-    var endEl=document.getElementById('ap-d-'+dt.key+'-end');
     dates[dt.key]={
       date:document.getElementById('ap-d-'+dt.key+'-date').value,
       startTime:document.getElementById('ap-d-'+dt.key+'-start').value||'09:00',
-      endDate:endEl?endEl.value:'',
       endTime:document.getElementById('ap-d-'+dt.key+'-etime').value||'17:00',
-      confirmed:document.getElementById('ap-d-'+dt.key+'-conf').checked
+      confirmed:document.getElementById('ap-d-'+dt.key+'-conf').checked,
+      assigned:''
     };
   });
   var newProp={id:Date.now(),address:addr,client:client,
