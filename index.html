@@ -619,10 +619,10 @@ function renderDetailBody(p) {
       '<span class="conf-dot"></span>'+(conf?'Confirmed':'Tentative')+'</span></div>'+
       '<div class="date-fields">'+
       '<div class="date-field-group"><label>Date</label><input type="date" value="'+(d.date||'')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'date\',this.value)"></div>'+
+      '<div class="date-field-group"><label>Assigned</label><input type="text" value="'+(d.assigned||'')+'" placeholder="e.g. Kylie, Sam..." onchange="updateDateField('+p.id+',\''+dt.key+'\',\'assigned\',this.value)"></div>'+
       '<div class="date-field-group"><label>Start time</label><input type="time" value="'+(d.startTime||'09:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'startTime\',this.value)"></div>'+
       (!dt.noEndTime ? '<div class="date-field-group"><label>End time</label><input type="time" value="'+(d.endTime||'17:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'endTime\',this.value)"></div>' : '')+
       '</div>'+
-      '<div class="date-field-group" style="margin-bottom:8px"><label>Assigned</label><input type="text" value="'+(d.assigned||'')+'" placeholder="e.g. Kylie, Sam..." onchange="updateDateField('+p.id+',\''+dt.key+'\',\'assigned\',this.value)"></div>'+
       '<div style="margin-top:6px;display:flex;align-items:center;gap:8px">'+
       (d.date
         ? '<button class="gcal-btn '+(d.calendarEventId?'confirmed':'tentative')+'" onclick="syncToCalendar(props.find(function(x){return x.id==='+p.id+'}),&quot;'+dt.key+'&quot;)">&#128197; '+(d.calendarEventId?'Update Calendar':'Sync to Calendar')+'</button>'
