@@ -346,7 +346,7 @@ const DATE_TYPES = [
   {key:'staging2',  label:'Staging Day 2',       cls:'dt-staging',   singleDay:true},
   {key:'pack',      label:'Planning/Pick/Pack',  cls:'dt-pack',      singleDay:true},
   {key:'logistics', label:'Logistics team',      cls:'dt-logistics', singleDay:true},
-  {key:'photo',     label:'Photography',         cls:'dt-photo',     singleDay:true},
+  {key:'photo',     label:'Photography',         cls:'dt-photo',     singleDay:true, noEndTime:true},
   {key:'destage',   label:'Destage',             cls:'dt-destage',   singleDay:true}
 ];
 
@@ -620,7 +620,7 @@ function renderDetailBody(p) {
       '<div class="date-fields">'+
       '<div class="date-field-group"><label>Date</label><input type="date" value="'+(d.date||'')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'date\',this.value)"></div>'+
       '<div class="date-field-group"><label>Start time</label><input type="time" value="'+(d.startTime||'09:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'startTime\',this.value)"></div>'+
-      '<div class="date-field-group"><label>End time</label><input type="time" value="'+(d.endTime||'17:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'endTime\',this.value)"></div>'+
+      (!dt.noEndTime ? '<div class="date-field-group"><label>End time</label><input type="time" value="'+(d.endTime||'17:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'endTime\',this.value)"></div>' : '')+
       '</div>'+
       '<div class="date-field-group" style="margin-bottom:8px"><label>Assigned</label><input type="text" value="'+(d.assigned||'')+'" placeholder="e.g. Kylie, Sam..." onchange="updateDateField('+p.id+',\''+dt.key+'\',\'assigned\',this.value)"></div>'+
       '<div style="margin-top:6px;display:flex;align-items:center;gap:8px">'+
