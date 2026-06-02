@@ -259,8 +259,7 @@ tr.prop-row:hover td{background:#fafaf8}
         <th style="width:8%">Stage</th>
         <th style="width:8%">Type</th>
         <th style="width:7%">Value</th>
-        <th style="width:7%">Add-ons</th>
-        <th style="width:7%">Total</th>
+        <th style="width:10%">Total</th>
         <th style="width:11%">Invoice</th>
       </tr></thead>
       <tbody id="prop-tbody"></tbody>
@@ -315,7 +314,7 @@ tr.prop-row:hover td{background:#fafaf8}
         <div class="ap-fg"><label>Vendor email</label><input id="ap-email" type="email" placeholder="jane@email.com"></div>
         <div class="ap-fg" style="grid-column:1/-1"><label>Vendor contact number</label><input id="ap-client-phone" type="tel" placeholder="0400 000 000"></div>
         <div class="ap-fg"><label>Staging value (ex GST)</label><input id="ap-value" type="number" placeholder="4500"></div>
-        <div class="ap-fg"><label>Project type</label><select id="ap-type"><option>Full Stage</option><option>Partial Stage</option><option>Interior Design</option><option>Photo Package - Essential</option><option>Photo Package - Styled</option></select></div>
+        <div class="ap-fg"><label>Project type</label><select id="ap-type"><option>Full Stage</option><option>Partial Stage</option><option>Interior Design</option><option>Photo Package - Essential</option><option>Photo Package - Styled</option><option>Commercial Photography</option></select></div>
         <div class="ap-fg"><label>Status</label><select id="ap-status"><option>Lead Only</option><option>Proposal Request</option><option>Proposal Sent</option><option>Accepted/Planning</option><option>Live Staging</option><option>On Hold</option><option>Demobilise/Complete</option></select></div>
         <div class="ap-fg"><label>Invoice status</label><select id="ap-inv"><option>Not sent</option><option>Sent</option><option>Deposit received</option><option>Final payment received</option></select></div>
         <div class="ap-fg" style="grid-column:1/-1"><label>Important info</label><input id="ap-key" placeholder="Lockbox front door — code 4729, alarm code etc"></div>
@@ -555,7 +554,6 @@ function renderPipeline() {
       '<td style="color:#065F46;font-size:12px;font-weight:600">'+(p.dates&&p.dates.staging1&&p.dates.staging1.date?new Date(p.dates.staging1.date+'T12:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}):'—')+'</td>'+
       '<td style="color:#888;font-size:12px">'+p.type+'</td>'+
       '<td style="font-weight:600">$'+(p.value||0).toLocaleString()+'</td>'+
-      '<td style="font-size:12px;color:#666">$'+addT.toLocaleString()+'</td>'+
       '<td style="font-weight:700;color:#059669">$'+tot.toLocaleString()+'</td>'+
       '<td><span class="inv-pill"><span class="inv-dot" style="background:'+ic+'"></span>'+p.invoice+'</span></td>'+
       '</tr>';
@@ -645,7 +643,7 @@ function renderDetailBody(p) {
           ' ondragstart="clDragStart(event)" ondragover="clDragOver(event)" ondrop="clDrop(event)" ondragleave="clDragLeave(event)">'+
           '<span class="drag-handle">&#9776;</span>'+
           '<div class="cl-cb '+(allC[i]?'done':'')+'" onclick="toggleCl('+p.id+',\''+ph.id+'\','+i+')">'+(allC[i]?svgTick():'')+  '</div>'+
-          '<span class="cl-label '+(allC[i]?'done':'')+'">'+item+'</span></div>';
+          '<span class="cl-label '+(allC[i]?'done':'')+'" ondblclick="editClItem(this,'+p.id+',\''+ph.id+'\','+i+','+bl+')" title="Double-click to edit">'+item+'</span></div>';
       }).join('')+
       '<div class="add-row" style="margin-top:8px">'+
       '<input id="cl-add-'+p.id+'-'+ph.id+'" placeholder="Add item..." onkeydown="if(event.key===\'Enter\')addClItem('+p.id+',\''+ph.id+'\')">'+
@@ -920,6 +918,38 @@ function exportToCSV(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
+function editClItem(el, pid, phase, idx, bl) {
+  var p = props.find(function(x){ return x.id===pid; }); if(!p) return;
+  var isCustom = idx >= bl;
+  var ci = idx - bl;
+  var currentText = el.textContent;
+  var input = document.createElement('input');
+  input.value = currentText;
+  input.style.cssText = 'width:100%;padding:2px 6px;font-size:13px;border:1px solid #1a1a1a;border-radius:4px;font-family:inherit;outline:none';
+  el.parentNode.replaceChild(input, el);
+  input.focus();
+  input.select();
+  var save = function() {
+    var newText = input.value.trim();
+    if(newText && newText !== currentText) {
+      if(isCustom) {
+        var key = phase+'_custom';
+        if(!p.checklist[key]) p.checklist[key] = [];
+        p.checklist[key][ci] = newText;
+      } else {
+        var ph = CHECKLIST_PHASES.find(function(x){ return x.id===phase; });
+        if(ph) ph.items[idx] = newText;
+      }
+      savePropToServer(p);
+    }
+    renderDetailBody(p);
+  };
+  input.onblur = save;
+  input.onkeydown = function(e) {
+    if(e.key==='Enter') save();
+    if(e.key==='Escape') renderDetailBody(p);
+  };
+}
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');renderPipeline();}
 function handleDetailBg(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
 function closeAddModal(){document.getElementById('add-overlay').classList.remove('open');}
