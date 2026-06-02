@@ -639,11 +639,12 @@ function renderDetailBody(p) {
     return '<div class="cl-phase">'+
       '<div class="cl-phase-hd"><div class="cl-phase-dot" style="background:'+ph.color+'"></div>'+ph.label+'</div>'+
       allI.map(function(item,i){
+        var isCustomItem = i >= ph.items.length;
         return '<div class="cl-item" draggable="true" data-pid="'+p.id+'" data-phase="'+ph.id+'" data-idx="'+i+'"'+
           ' ondragstart="clDragStart(event)" ondragover="clDragOver(event)" ondrop="clDrop(event)" ondragleave="clDragLeave(event)">'+
           '<span class="drag-handle">&#9776;</span>'+
           '<div class="cl-cb '+(allC[i]?'done':'')+'" onclick="toggleCl('+p.id+',\''+ph.id+'\','+i+')">'+(allC[i]?svgTick():'')+  '</div>'+
-          '<span class="cl-label '+(allC[i]?'done':'')+'" ondblclick="editClItem(this,'+p.id+',\''+ph.id+'\','+i+','+bl+')" title="Double-click to edit">'+item+'</span></div>';
+          '<span class="cl-label '+(allC[i]?'done':'')+'" ondblclick="editClItem(this,'+p.id+',\''+ph.id+'\','+i+','+ph.items.length+')" title="Double-click to edit">'+item+'</span></div>';
       }).join('')+
       '<div class="add-row" style="margin-top:8px">'+
       '<input id="cl-add-'+p.id+'-'+ph.id+'" placeholder="Add item..." onkeydown="if(event.key===\'Enter\')addClItem('+p.id+',\''+ph.id+'\')">'+
