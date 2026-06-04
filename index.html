@@ -136,10 +136,6 @@ tr.prop-row:hover td{background:#fafaf8}
 .cal-status.synced{background:#ECFDF5;color:#065F46}
 .cal-status.tentative{background:#FFFBEB;color:#92400E}
 .cal-status.pending{background:#f5f4f1;color:#999}
-.assign-box{background:#f8f7f5;border:1px solid #e8e6e0;border-radius:8px;padding:8px 10px;margin-top:8px}
-.assign-label{font-size:10px;color:#aaa;font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
-.assign-input{width:100%;padding:6px 8px;font-size:12px;border:1px solid #e8e6e0;border-radius:6px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none;resize:none}
-.assign-input:focus{border-color:#1a1a1a}
 .cl-phase{margin-bottom:14px}
 .cl-phase-hd{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:#333;margin-bottom:8px}
 .cl-phase-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
@@ -339,6 +335,7 @@ tr.prop-row:hover td{background:#fafaf8}
 
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbyN5TH8LHr6qCbmpyR0gcd4agsJ1Pz19D8RLlf-cfhU_dztvhN4b0ClLnUWAEuv3wYp/exec';
+const PROJECT_TYPES = ['Full Stage','Partial Stage','Interior Design','Photo Package - Essential','Photo Package - Styled','Commercial Photography'];
 
 const DATE_TYPES = [
   {key:'staging1',  label:'Staging Day 1',       cls:'dt-staging',   singleDay:true},
@@ -354,6 +351,7 @@ const CHECKLIST_PHASES = [
   {id:'preinstall', label:'Pre-install',  color:'#2563EB', items:['Working brief produced (floor plan, inventory etc)','Logistics team booked','XERO updated with email template automation','Pickers and packers booked']},
   {id:'destage',    label:'Destage',      color:'#DC2626', items:['Logistics team booked','Pickers and packers booked']}
 ];
+const STATUS_OPTS = ['Lead Only','Proposal Request','Proposal Sent','Accepted/Planning','Live Staging','On Hold','Demobilise/Complete'];
 const STATUS_CLASS = {'Lead Only':'s-lead','Proposal Request':'s-preq','Proposal Sent':'s-psent','Accepted/Planning':'s-plan','Live Staging':'s-live','On Hold':'s-hold','Demobilise/Complete':'s-done'};
 const INV_COLORS   = {'Not sent':'#C4C2BB','Sent':'#D97706','Deposit received':'#059669','Final payment received':'#1D4ED8'};
 
@@ -536,7 +534,7 @@ function renderPipeline() {
 
   if (!filtered.length) {
     var empty = '<div class="empty"><div class="empty-icon">&#127968;</div><p>No properties yet — tap "+ New" to get started.</p></div>';
-    document.getElementById('prop-tbody').innerHTML = '<tr><td colspan="11">' + empty + '</td></tr>';
+    document.getElementById('prop-tbody').innerHTML = '<tr><td colspan="10">' + empty + '</td></tr>';
     document.getElementById('mobile-cards').innerHTML = empty;
     return;
   }
@@ -630,21 +628,20 @@ function renderDetailBody(p) {
       '</div>';
   }).join('');
 
-  // CHECKLIST - all phases allow custom items
   var clHtml = CHECKLIST_PHASES.map(function(ph) {
     var custI = p.checklist[ph.id+'_custom'] || (ph.id==='destage' ? (p.checklist.customItems||[]) : []);
     var custC = p.checklist[ph.id+'_customChecked'] || (ph.id==='destage' ? (p.checklist.customChecked||[]) : []);
     var allI = ph.items.concat(custI);
     var allC = (p.checklist[ph.id]||[]).concat(custC);
+    var bl = ph.items.length;
     return '<div class="cl-phase">'+
       '<div class="cl-phase-hd"><div class="cl-phase-dot" style="background:'+ph.color+'"></div>'+ph.label+'</div>'+
       allI.map(function(item,i){
-        var isCustomItem = i >= ph.items.length;
         return '<div class="cl-item" draggable="true" data-pid="'+p.id+'" data-phase="'+ph.id+'" data-idx="'+i+'"'+
           ' ondragstart="clDragStart(event)" ondragover="clDragOver(event)" ondrop="clDrop(event)" ondragleave="clDragLeave(event)">'+
           '<span class="drag-handle">&#9776;</span>'+
           '<div class="cl-cb '+(allC[i]?'done':'')+'" onclick="toggleCl('+p.id+',\''+ph.id+'\','+i+')">'+(allC[i]?svgTick():'')+  '</div>'+
-          '<span class="cl-label '+(allC[i]?'done':'')+'" ondblclick="editClItem(this,'+p.id+',\''+ph.id+'\','+i+','+ph.items.length+')" title="Double-click to edit">'+item+'</span></div>';
+          '<span class="cl-label '+(allC[i]?'done':'')+'" ondblclick="editClItem(this,'+p.id+',\''+ph.id+'\','+i+','+bl+')" title="Double-click to edit">'+item+'</span></div>';
       }).join('')+
       '<div class="add-row" style="margin-top:8px">'+
       '<input id="cl-add-'+p.id+'-'+ph.id+'" placeholder="Add item..." onkeydown="if(event.key===\'Enter\')addClItem('+p.id+',\''+ph.id+'\')">'+
@@ -707,11 +704,11 @@ function renderDetailBody(p) {
     '<div class="m-sec-title">Details <button class="edit-btn" onclick="toggleEdit('+p.id+')">&#9998; Edit</button></div>'+
     '<div class="detail-grid">'+
     '<div class="detail-box"><div class="detail-lbl">Status</div><div class="detail-val">'+
-    '<select onchange="updateProp('+p.id+',\'status\',this.value)">'+['Lead Only','Proposal Request','Proposal Sent','Accepted/Planning','Live Staging','On Hold','Demobilise/Complete'].map(function(s){return '<option'+(s===p.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div></div>'+
+    '<select onchange="updateProp('+p.id+',\'status\',this.value)">'+STATUS_OPTS.map(function(s){return '<option'+(s===p.status?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div></div>'+
     '<div class="detail-box"><div class="detail-lbl">Invoice</div><div class="detail-val">'+
     '<select onchange="updateProp('+p.id+',\'invoice\',this.value)">'+['Not sent','Sent','Deposit received','Final payment received'].map(function(s){return '<option'+(s===p.invoice?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div></div>'+
     '<div class="detail-box"><div class="detail-lbl">Project type</div><div class="detail-val">'+
-    '<select onchange="updateProp('+p.id+',\'type\',this.value)">'+['Full Stage','Partial Stage','Interior Design','Photo Package - Essential','Photo Package - Styled'].map(function(s){return '<option'+(s===p.type?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div></div>'+
+    '<select onchange="updateProp('+p.id+',\'type\',this.value)">'+PROJECT_TYPES.map(function(s){return '<option'+(s===p.type?' selected':'')+'>'+s+'</option>';}).join('')+'</select></div></div>'+
     '<div class="detail-box"><div class="detail-lbl">Staging value (ex GST)</div><div class="detail-val">'+
     '<input type="number" value="'+(p.value||'')+'" onchange="updateProp('+p.id+',\'value\',parseFloat(this.value)||0)"></div></div>'+
     '</div>'+
@@ -951,6 +948,7 @@ function editClItem(el, pid, phase, idx, bl) {
     if(e.key==='Escape') renderDetailBody(p);
   };
 }
+
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');renderPipeline();}
 function handleDetailBg(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
 function closeAddModal(){document.getElementById('add-overlay').classList.remove('open');}
