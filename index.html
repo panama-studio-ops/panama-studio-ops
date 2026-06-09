@@ -338,12 +338,13 @@ const API = 'https://script.google.com/macros/s/AKfycbyN5TH8LHr6qCbmpyR0gcd4agsJ
 const PROJECT_TYPES = ['Full Stage','Partial Stage','Interior Design','Photo Package - Essential','Photo Package - Styled','Commercial Photography'];
 
 const DATE_TYPES = [
-  {key:'staging1',  label:'Staging Day 1',       cls:'dt-staging',   singleDay:true},
-  {key:'staging2',  label:'Staging Day 2',       cls:'dt-staging',   singleDay:true},
-  {key:'pack',      label:'Planning/Pick/Pack',  cls:'dt-pack',      singleDay:true},
-  {key:'logistics', label:'Logistics Install',   cls:'dt-logistics', singleDay:true},
-  {key:'photo',     label:'Photography',         cls:'dt-photo',     singleDay:true, noEndTime:true},
-  {key:'destage',   label:'Logistics Destage',   cls:'dt-destage',   singleDay:true}
+  {key:'staging1',   label:'Staging Day 1',       cls:'dt-staging',   singleDay:true},
+  {key:'staging2',   label:'Staging Day 2',       cls:'dt-staging',   singleDay:true},
+  {key:'walkthrough',label:'Walkthrough',          cls:'dt-pack',      singleDay:true},
+  {key:'pack',       label:'Pick & Pack',          cls:'dt-pack',      singleDay:true},
+  {key:'photo',      label:'Photography',          cls:'dt-photo',     singleDay:true, noEndTime:true},
+  {key:'logistics',  label:'Logistics Install',    cls:'dt-logistics', singleDay:true},
+  {key:'destage',    label:'Logistics Destage',    cls:'dt-destage',   singleDay:true}
 ];
 
 const CHECKLIST_PHASES = [
@@ -904,11 +905,11 @@ function addAddon(pid){
 function removeAddon(pid,idx){var p=props.find(function(x){return x.id===pid;});if(!p||!p.addons)return;p.addons.splice(idx,1);savePropToServer(p);renderDetailBody(p);renderPipeline();}
 
 function exportToCSV(){
-  var headers=['Property Address','Vendor','Vendor Email','Agency','Agent','Agent Email','Type','Status','Invoice','Staging Value','Add-ons Total','Total Value','Staging Day 1','Staging Day 2','Planning/Pick/Pack','Logistics Date','Photography Date','Destage Date'];
+  var headers=['Property Address','Vendor','Vendor Email','Agency','Agent','Agent Email','Type','Status','Invoice','Staging Value','Add-ons Total','Total Value','Staging Day 1','Staging Day 2','Walkthrough','Pick & Pack','Photography Date','Logistics Install Date','Logistics Destage Date'];
   var rows=props.map(function(p){
     var addT=(p.addons||[]).reduce(function(s,a){return s+(parseFloat(a.value)||0);},0);
     var fmtDate=function(key){return p.dates&&p.dates[key]&&p.dates[key].date?p.dates[key].date:'';};
-    return [p.address||'',p.client||'',p.email||'',p.agency||'',p.agent||'',p.agentEmail||'',p.type||'',p.status||'',p.invoice||'',p.value||0,addT,(p.value||0)+addT,fmtDate('staging1'),fmtDate('staging2'),fmtDate('pack'),fmtDate('logistics'),fmtDate('photo'),fmtDate('destage')].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';});
+    return [p.address||'',p.client||'',p.email||'',p.agency||'',p.agent||'',p.agentEmail||'',p.type||'',p.status||'',p.invoice||'',p.value||0,addT,(p.value||0)+addT,fmtDate('staging1'),fmtDate('staging2'),fmtDate('walkthrough'),fmtDate('pack'),fmtDate('photo'),fmtDate('logistics'),fmtDate('destage')].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';});
   });
   var csv=[headers.map(function(h){return '"'+h+'"';}).join(',')].concat(rows.map(function(r){return r.join(',');})).join('\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);
