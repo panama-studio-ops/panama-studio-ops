@@ -458,6 +458,7 @@ function syncToCalendar(p, dateKey) {
       .then(function(result) {
         if(result && result.eventId) {
           p.dates[dateKey].calendarEventId = result.eventId;
+          p.dates[dateKey].kylieEventId = result.kylieEventId || null;
           savePropToServer(p);
           setSyncStatus('ok', 'Calendar synced \u2713');
           if(statusEl) statusEl.textContent = '\u2713 Synced';
@@ -474,6 +475,7 @@ function syncToCalendar(p, dateKey) {
   };
   if(oldEventId) {
     p.dates[dateKey].calendarEventId = null;
+    p.dates[dateKey].kylieEventId = null;
     apiCall({action:'deleteCalendarEvent', eventId:oldEventId})
       .then(function() { doSync(); })
       .catch(function() { doSync(); });
