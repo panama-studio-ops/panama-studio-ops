@@ -338,13 +338,14 @@ const API = 'https://script.google.com/macros/s/AKfycbyN5TH8LHr6qCbmpyR0gcd4agsJ
 const PROJECT_TYPES = ['Full Stage','Partial Stage','Interior Design','Photo Package - Essential','Photo Package - Styled','Commercial Photography'];
 
 const DATE_TYPES = [
-  {key:'staging1',   label:'Staging Day 1',       cls:'dt-staging',   singleDay:true},
-  {key:'staging2',   label:'Staging Day 2',       cls:'dt-staging',   singleDay:true},
-  {key:'walkthrough',label:'Walkthrough',          cls:'dt-pack',      singleDay:true},
-  {key:'pack',       label:'Pick & Pack',          cls:'dt-pack',      singleDay:true},
-  {key:'photo',      label:'Photography',          cls:'dt-photo',     singleDay:true, noEndTime:true},
-  {key:'logistics',  label:'Logistics Install',    cls:'dt-logistics', singleDay:true},
-  {key:'destage',    label:'Logistics Destage',    cls:'dt-destage',   singleDay:true}
+  {key:'walkthrough',  label:'Walkthrough',          cls:'dt-pack',      singleDay:true},
+  {key:'pack',         label:'Pick & Pack',          cls:'dt-pack',      singleDay:true},
+  {key:'staging1',     label:'Staging Day 1',        cls:'dt-staging',   singleDay:true},
+  {key:'staging2',     label:'Staging Day 2',        cls:'dt-staging',   singleDay:true},
+  {key:'photo',        label:'Photography',          cls:'dt-photo',     singleDay:true, noEndTime:true},
+  {key:'destage',      label:'Destage',              cls:'dt-destage',   singleDay:true},
+  {key:'logdestage',   label:'Logistics Destage',    cls:'dt-destage',   singleDay:true, noSync:true},
+  {key:'logistics',    label:'Logistics Install',    cls:'dt-logistics', singleDay:true, noSync:true}
 ];
 
 const CHECKLIST_PHASES = [
@@ -622,12 +623,12 @@ function renderDetailBody(p) {
       '<div class="date-field-group"><label>Start time</label><input type="time" value="'+(d.startTime||'09:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'startTime\',this.value)"></div>'+
       (!dt.noEndTime ? '<div class="date-field-group"><label>End time</label><input type="time" value="'+(d.endTime||'17:00')+'" onchange="updateDateField('+p.id+',\''+dt.key+'\',\'endTime\',this.value)"></div>' : '')+
       '</div>'+
-      '<div style="margin-top:6px;display:flex;align-items:center;gap:8px">'+
+      (!dt.noSync ? '<div style="margin-top:6px;display:flex;align-items:center;gap:8px">'+
       (d.date
         ? '<button class="gcal-btn '+(d.calendarEventId?'confirmed':'tentative')+'" onclick="syncToCalendar(props.find(function(x){return x.id==='+p.id+'}),&quot;'+dt.key+'&quot;)">&#128197; '+(d.calendarEventId?'Update Calendar':'Sync to Calendar')+'</button>'
         : '<span class="gcal-btn disabled">&#128197; Sync to Calendar</span>')+
       '<span style="font-size:10px;color:#bbb" id="cal-status-'+p.id+'-'+dt.key+'">'+(d.calendarEventId?'\u2713 Synced':'Not synced')+'</span>'+
-      '</div>'+
+      '</div>' : '')+
       '</div>';
   }).join('');
 
