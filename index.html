@@ -344,8 +344,8 @@ const DATE_TYPES = [
   {key:'staging2',     label:'Staging Day 2',        cls:'dt-staging',   singleDay:true},
   {key:'photo',        label:'Photography',          cls:'dt-photo',     singleDay:true, noEndTime:true},
   {key:'destage',      label:'Destage',              cls:'dt-destage',   singleDay:true},
-  {key:'logdestage',   label:'Logistics Destage',    cls:'dt-destage',   singleDay:true, noSync:true},
-  {key:'logistics',    label:'Logistics Install',    cls:'dt-logistics', singleDay:true, noSync:true}
+  {key:'logistics',    label:'Logistics Install',    cls:'dt-logistics', singleDay:true, noSync:true},
+  {key:'logdestage',   label:'Logistics Destage',    cls:'dt-destage',   singleDay:true, noSync:true}
 ];
 
 const CHECKLIST_PHASES = [
@@ -453,36 +453,24 @@ function syncToCalendar(p, dateKey) {
   setSyncStatus('syncing', 'Syncing...');
   var statusEl = document.getElementById('cal-status-'+p.id+'-'+dateKey);
   if(statusEl) statusEl.textContent = 'Syncing...';
-  var oldEventId = p.dates[dateKey].calendarEventId;
-  var doSync = function() {
-    apiCall({action:'syncCalendar', prop:p, dateKey:dateKey})
-      .then(function(result) {
-        if(result && result.eventId) {
-          p.dates[dateKey].calendarEventId = result.eventId;
-          p.dates[dateKey].kylieEventId = result.kylieEventId || null;
-          savePropToServer(p);
-          setSyncStatus('ok', 'Calendar synced \u2713');
-          if(statusEl) statusEl.textContent = '\u2713 Synced';
-          renderDetailBody(p);
-        } else {
-          setSyncStatus('error', 'Sync failed');
-          if(statusEl) statusEl.textContent = 'Sync failed';
-        }
-      })
-      .catch(function() {
+  apiCall({action:'syncCalendar', prop:p, dateKey:dateKey})
+    .then(function(result) {
+      if(result && result.eventId) {
+        p.dates[dateKey].calendarEventId = result.eventId;
+        p.dates[dateKey].kylieEventId = result.kylieEventId || null;
+        savePropToServer(p);
+        setSyncStatus('ok', 'Calendar synced \u2713');
+        if(statusEl) statusEl.textContent = '\u2713 Synced';
+        renderDetailBody(p);
+      } else {
         setSyncStatus('error', 'Sync failed');
         if(statusEl) statusEl.textContent = 'Sync failed';
-      });
-  };
-  if(oldEventId) {
-    p.dates[dateKey].calendarEventId = null;
-    p.dates[dateKey].kylieEventId = null;
-    apiCall({action:'deleteCalendarEvent', eventId:oldEventId})
-      .then(function() { doSync(); })
-      .catch(function() { doSync(); });
-  } else {
-    doSync();
-  }
+      }
+    })
+    .catch(function() {
+      setSyncStatus('error', 'Sync failed');
+      if(statusEl) statusEl.textContent = 'Sync failed';
+    });
 }
 
 function savePropToServer(p) {
@@ -908,11 +896,11 @@ function addAddon(pid){
 function removeAddon(pid,idx){var p=props.find(function(x){return x.id===pid;});if(!p||!p.addons)return;p.addons.splice(idx,1);savePropToServer(p);renderDetailBody(p);renderPipeline();}
 
 function exportToCSV(){
-  var headers=['Property Address','Vendor','Vendor Email','Agency','Agent','Agent Email','Type','Status','Invoice','Staging Value','Add-ons Total','Total Value','Staging Day 1','Staging Day 2','Walkthrough','Pick & Pack','Photography Date','Logistics Install Date','Logistics Destage Date'];
+  var headers=['Property Address','Vendor','Vendor Email','Agency','Agent','Agent Email','Type','Status','Invoice','Staging Value','Add-ons Total','Total Value','Staging Day 1','Staging Day 2','Walkthrough','Pick & Pack','Photography Date','Destage Date','Logistics Install Date','Logistics Destage Date'];
   var rows=props.map(function(p){
     var addT=(p.addons||[]).reduce(function(s,a){return s+(parseFloat(a.value)||0);},0);
     var fmtDate=function(key){return p.dates&&p.dates[key]&&p.dates[key].date?p.dates[key].date:'';};
-    return [p.address||'',p.client||'',p.email||'',p.agency||'',p.agent||'',p.agentEmail||'',p.type||'',p.status||'',p.invoice||'',p.value||0,addT,(p.value||0)+addT,fmtDate('staging1'),fmtDate('staging2'),fmtDate('walkthrough'),fmtDate('pack'),fmtDate('photo'),fmtDate('logistics'),fmtDate('destage')].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';});
+    return [p.address||'',p.client||'',p.email||'',p.agency||'',p.agent||'',p.agentEmail||'',p.type||'',p.status||'',p.invoice||'',p.value||0,addT,(p.value||0)+addT,fmtDate('staging1'),fmtDate('staging2'),fmtDate('walkthrough'),fmtDate('pack'),fmtDate('photo'),fmtDate('destage'),fmtDate('logistics'),fmtDate('logdestage')].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';});
   });
   var csv=[headers.map(function(h){return '"'+h+'"';}).join(',')].concat(rows.map(function(r){return r.join(',');})).join('\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);
