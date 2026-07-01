@@ -70,6 +70,7 @@ tr.prop-row:hover td{background:#fafaf8}
 .s-live{background:#ECFDF5;color:#065F46}
 .s-done{background:#F1F0EE;color:#888}
 .s-hold{background:#FEE2E2;color:#991B1B}
+.s-unsuccessful{background:#F1F0EE;color:#6B7280}
 .inv-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#666}
 .inv-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .task-filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
@@ -241,6 +242,7 @@ tr.prop-row:hover td{background:#fafaf8}
       <button class="filter-btn" onclick="setFilter('Accepted/Planning',this)">Planning</button>
       <button class="filter-btn" onclick="setFilter('Live Staging',this)">Live</button>
       <button class="filter-btn" onclick="setFilter('On Hold',this)">On Hold</button>
+      <button class="filter-btn" onclick="setFilter('Unsuccessful',this)">Unsuccessful</button>
       <button class="filter-btn" onclick="setFilter('Demobilise/Complete',this)">Complete</button>
     </div>
   </div>
@@ -311,7 +313,7 @@ tr.prop-row:hover td{background:#fafaf8}
         <div class="ap-fg" style="grid-column:1/-1"><label>Vendor contact number</label><input id="ap-client-phone" type="tel" placeholder="0400 000 000"></div>
         <div class="ap-fg"><label>Staging value (ex GST)</label><input id="ap-value" type="number" placeholder="4500"></div>
         <div class="ap-fg"><label>Project type</label><select id="ap-type"><option>Full Stage</option><option>Partial Stage</option><option>Interior Design</option><option>Photo Package - Essential</option><option>Photo Package - Styled</option><option>Commercial Photography</option></select></div>
-        <div class="ap-fg"><label>Status</label><select id="ap-status"><option>Lead Only</option><option>Proposal Request</option><option>Proposal Sent</option><option>Accepted/Planning</option><option>Live Staging</option><option>On Hold</option><option>Demobilise/Complete</option></select></div>
+        <div class="ap-fg"><label>Status</label><select id="ap-status"><option>Lead Only</option><option>Proposal Request</option><option>Proposal Sent</option><option>Accepted/Planning</option><option>Live Staging</option><option>On Hold</option><option>Unsuccessful</option><option>Demobilise/Complete</option></select></div>
         <div class="ap-fg"><label>Invoice status</label><select id="ap-inv"><option>Not sent</option><option>Sent</option><option>Deposit received</option><option>Final payment received</option></select></div>
         <div class="ap-fg" style="grid-column:1/-1"><label>Important info</label><input id="ap-key" placeholder="Lockbox front door — code 4729, alarm code etc"></div>
       </div>
@@ -353,8 +355,8 @@ const CHECKLIST_PHASES = [
   {id:'preinstall', label:'Pre-install',  color:'#2563EB', items:['Logistics team booked','Pickers and packers booked','Budget Actual','Stager and Inventory Updated']},
   {id:'destage',    label:'Destage',      color:'#DC2626', items:['Logistics team booked','Pickers and packers booked']}
 ];
-const STATUS_OPTS = ['Lead Only','Proposal Request','Proposal Sent','Accepted/Planning','Live Staging','On Hold','Demobilise/Complete'];
-const STATUS_CLASS = {'Lead Only':'s-lead','Proposal Request':'s-preq','Proposal Sent':'s-psent','Accepted/Planning':'s-plan','Live Staging':'s-live','On Hold':'s-hold','Demobilise/Complete':'s-done'};
+const STATUS_OPTS = ['Lead Only','Proposal Request','Proposal Sent','Accepted/Planning','Live Staging','On Hold','Unsuccessful','Demobilise/Complete'];
+const STATUS_CLASS = {'Lead Only':'s-lead','Proposal Request':'s-preq','Proposal Sent':'s-psent','Accepted/Planning':'s-plan','Live Staging':'s-live','On Hold':'s-hold','Unsuccessful':'s-unsuccessful','Demobilise/Complete':'s-done'};
 const INV_COLORS   = {'Not sent':'#C4C2BB','Sent':'#D97706','Deposit received':'#059669','Final payment received':'#1D4ED8'};
 
 let props = [];
