@@ -312,7 +312,7 @@ tr.prop-row:hover td{background:#fafaf8}
         <div class="ap-fg"><label>Vendor email</label><input id="ap-email" type="email" placeholder="jane@email.com"></div>
         <div class="ap-fg" style="grid-column:1/-1"><label>Vendor contact number</label><input id="ap-client-phone" type="tel" placeholder="0400 000 000"></div>
         <div class="ap-fg"><label>Staging value (ex GST)</label><input id="ap-value" type="number" placeholder="4500"></div>
-        <div class="ap-fg"><label>Project type</label><select id="ap-type"><option>Full Stage</option><option>Partial Stage</option><option>Interior Design</option><option>Photo Package - Essential</option><option>Photo Package - Styled</option><option>Commercial Photography</option></select></div>
+        <div class="ap-fg"><label>Project type</label><select id="ap-type"><option>Full Stage</option><option>Partial Stage</option><option>Interior Design</option><option>Photo Package - Essential</option><option>Photo Package - Styled</option><option>Commercial Photography</option><option>Photography Only</option></select></div>
         <div class="ap-fg"><label>Status</label><select id="ap-status"><option>Lead Only</option><option>Proposal Request</option><option>Proposal Sent</option><option>Accepted/Planning</option><option>Live Staging</option><option>On Hold</option><option>Unsuccessful</option><option>Demobilise/Complete</option></select></div>
         <div class="ap-fg"><label>Invoice status</label><select id="ap-inv"><option>Not sent</option><option>Sent</option><option>Deposit received</option><option>Final payment received</option></select></div>
         <div class="ap-fg" style="grid-column:1/-1"><label>Important info</label><input id="ap-key" placeholder="Lockbox front door — code 4729, alarm code etc"></div>
@@ -337,7 +337,7 @@ tr.prop-row:hover td{background:#fafaf8}
 
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbyN5TH8LHr6qCbmpyR0gcd4agsJ1Pz19D8RLlf-cfhU_dztvhN4b0ClLnUWAEuv3wYp/exec';
-const PROJECT_TYPES = ['Full Stage','Partial Stage','Interior Design','Photo Package - Essential','Photo Package - Styled','Commercial Photography'];
+const PROJECT_TYPES = ['Full Stage','Partial Stage','Interior Design','Photo Package - Essential','Photo Package - Styled','Commercial Photography','Photography Only'];
 
 const DATE_TYPES = [
   {key:'walkthrough',  label:'Walkthrough',          cls:'dt-pack',      singleDay:true},
