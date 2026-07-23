@@ -251,10 +251,9 @@ tr.prop-row:hover td{background:#fafaf8}
       <thead><tr>
         <th style="width:22%">Property address</th>
         <th style="width:11%">Agency</th>
-        <th style="width:9%">Agent</th>
-        <th style="width:9%">Vendor</th>
         <th style="width:11%">Status</th>
         <th style="width:8%">Stage</th>
+        <th style="width:8%">Destage</th>
         <th style="width:8%">Type</th>
         <th style="width:7%">Value</th>
         <th style="width:10%">Total</th>
@@ -352,8 +351,8 @@ const DATE_TYPES = [
 
 const CHECKLIST_PHASES = [
   {id:'prebook',    label:'Pre-booking', color:'#D97706', items:['Proposal sent','Budget Forecast']},
-  {id:'preinstall', label:'Pre-install',  color:'#2563EB', items:['Logistics team booked','Pickers and packers booked','Budget Actual','Stager and Inventory Updated']},
-  {id:'destage',    label:'Destage',      color:'#DC2626', items:['Logistics team booked','Pickers and packers booked']}
+  {id:'preinstall', label:'Pre-install',  color:'#2563EB', items:['Logistics team booked','Pickers and packers booked','Budget Actual','Stager and Inventory Updated','Stager - Upload before photos','Stager - Upload inventory']},
+  {id:'destage',    label:'Destage',      color:'#DC2626', items:['Logistics team booked','Pickers and packers booked','Stager - Update date for destage']}
 ];
 const STATUS_OPTS = ['Lead Only','Proposal Request','Proposal Sent','Accepted/Planning','Live Staging','On Hold','Unsuccessful','Demobilise/Complete'];
 const STATUS_CLASS = {'Lead Only':'s-lead','Proposal Request':'s-preq','Proposal Sent':'s-psent','Accepted/Planning':'s-plan','Live Staging':'s-live','On Hold':'s-hold','Unsuccessful':'s-unsuccessful','Demobilise/Complete':'s-done'};
@@ -528,7 +527,7 @@ function renderPipeline() {
 
   if (!filtered.length) {
     var empty = '<div class="empty"><div class="empty-icon">&#127968;</div><p>No properties yet — tap "+ New" to get started.</p></div>';
-    document.getElementById('prop-tbody').innerHTML = '<tr><td colspan="10">' + empty + '</td></tr>';
+    document.getElementById('prop-tbody').innerHTML = '<tr><td colspan="9">' + empty + '</td></tr>';
     document.getElementById('mobile-cards').innerHTML = empty;
     return;
   }
@@ -540,10 +539,9 @@ function renderPipeline() {
     return '<tr class="prop-row" onclick="openDetail('+p.id+')">'+
       '<td title="'+p.address+'"><div style="font-weight:600">'+p.address+'</div></td>'+
       '<td style="color:#666;font-size:12px">'+(p.agency||'—')+'</td>'+
-      '<td style="color:#666;font-size:12px">'+(p.agent||'—')+'</td>'+
-      '<td style="color:#666;font-size:12px">'+(p.client||'—')+'</td>'+
       '<td><span class="badge '+sc+'">'+p.status+'</span></td>'+
       '<td style="color:#065F46;font-size:12px;font-weight:600">'+(p.dates&&p.dates.staging1&&p.dates.staging1.date?new Date(p.dates.staging1.date+'T12:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}):'—')+'</td>'+
+      '<td style="color:#991B1B;font-size:12px;font-weight:600">'+(p.dates&&p.dates.destage&&p.dates.destage.date?new Date(p.dates.destage.date+'T12:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}):'—')+'</td>'+
       '<td style="color:#888;font-size:12px">'+p.type+'</td>'+
       '<td style="font-weight:600">$'+(p.value||0).toLocaleString()+'</td>'+
       '<td style="font-weight:700;color:#059669">$'+tot.toLocaleString()+'</td>'+
