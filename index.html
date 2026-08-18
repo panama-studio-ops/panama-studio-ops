@@ -767,10 +767,21 @@ function renderDetailBody(p) {
         }).join('')
       : '<div style="font-size:12px;color:#bbb;padding:4px 0">No testimonials yet.</div>')+
     '</div>'+
-    '<div style="margin-top:8px;display:flex;gap:6px;align-items:flex-start">'+
-    '<input id="ti-tm-from-'+p.id+'" placeholder="From..." style="width:140px;flex-shrink:0;padding:8px 12px;font-size:13px;border:1px solid #e0deda;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none">'+
+    '<div style="margin-top:10px">'+
+    '<div style="display:flex;gap:12px;margin-bottom:8px;flex-wrap:wrap">'+
+    '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;font-weight:500">'+
+    '<input type="radio" name="tm-from-type-'+p.id+'" value="agent" onclick="tmFromType('+p.id+',&quot;agent&quot;)" style="cursor:pointer;accent-color:#1a1a1a"> Agent</label>'+
+    '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;font-weight:500">'+
+    '<input type="radio" name="tm-from-type-'+p.id+'" value="vendor" onclick="tmFromType('+p.id+',&quot;vendor&quot;)" style="cursor:pointer;accent-color:#1a1a1a"> Vendor</label>'+
+    '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;font-weight:500">'+
+    '<input type="radio" name="tm-from-type-'+p.id+'" value="other" onclick="tmFromType('+p.id+',&quot;other&quot;)" style="cursor:pointer;accent-color:#1a1a1a"> Other</label>'+
+    '</div>'+
+    '<div id="ti-tm-from-display-'+p.id+'" style="font-size:12px;color:#666;margin-bottom:6px;min-height:16px"></div>'+
+    '<input id="ti-tm-from-other-'+p.id+'" placeholder="Type name..." style="display:none;width:100%;margin-bottom:6px;padding:8px 12px;font-size:13px;border:1px solid #e0deda;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none">'+
+    '<div style="display:flex;gap:6px">'+
     '<input id="ti-tm-'+p.id+'" placeholder="Paste testimonial text..." style="flex:1;padding:8px 12px;font-size:13px;border:1px solid #e0deda;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none">'+
-    '<button onclick="addTestimonial('+p.id+')" style="padding:8px 14px;font-size:13px;font-weight:500;border:1px solid #e0deda;border-radius:8px;background:#fafaf8;cursor:pointer;color:#1a1a1a;white-space:nowrap">+ Add</button></div>'+
+    '<button onclick="addTestimonial('+p.id+')" style="padding:8px 14px;font-size:13px;font-weight:500;border:1px solid #e0deda;border-radius:8px;background:#fafaf8;cursor:pointer;color:#1a1a1a;white-space:nowrap">+ Add</button>'+
+    '</div></div>'+
     '</div>'+
 
     '<div class="m-sec"><div class="m-sec-title">Comments</div>'+
@@ -965,16 +976,44 @@ function editClItem(el, pid, phase, idx, bl) {
   };
 }
 
+function tmFromType(pid, type) {
+  var p = props.find(function(x){ return x.id===pid; }); if(!p) return;
+  var display = document.getElementById('ti-tm-from-display-'+pid);
+  var otherInp = document.getElementById('ti-tm-from-other-'+pid);
+  var fromText = '';
+  if(type === 'agent') {
+    fromText = (p.agent||'') + (p.agency?' — '+p.agency:'');
+    if(display) display.textContent = 'From: ' + (fromText || '—');
+    if(otherInp) otherInp.style.display = 'none';
+  } else if(type === 'vendor') {
+    fromText = p.client || '';
+    if(display) display.textContent = 'From: ' + (fromText || '—');
+    if(otherInp) otherInp.style.display = 'none';
+  } else {
+    if(display) display.textContent = '';
+    if(otherInp) { otherInp.style.display = 'block'; otherInp.focus(); }
+  }
+}
 function addTestimonial(pid) {
   var p = props.find(function(x){ return x.id===pid; }); if(!p) return;
   var inp = document.getElementById('ti-tm-'+pid);
-  var fromInp = document.getElementById('ti-tm-from-'+pid);
   var txt = inp.value.trim(); if(!txt) return;
-  var from = fromInp ? fromInp.value.trim() : '';
+  // Get selected type
+  var radios = document.querySelectorAll('input[name="tm-from-type-'+pid+'"]');
+  var selectedType = '';
+  radios.forEach(function(r){ if(r.checked) selectedType = r.value; });
+  var from = '';
+  if(selectedType === 'agent') {
+    from = (p.agent||'') + (p.agency?' — '+p.agency:'');
+  } else if(selectedType === 'vendor') {
+    from = p.client || '';
+  } else if(selectedType === 'other') {
+    var otherInp = document.getElementById('ti-tm-from-other-'+pid);
+    from = otherInp ? otherInp.value.trim() : '';
+  }
   if(!p.testimonials) p.testimonials = [];
   p.testimonials.push({text: txt, author: from});
   inp.value = '';
-  if(fromInp) fromInp.value = '';
   savePropToServer(p);
   renderDetailBody(p);
   renderPipeline();
