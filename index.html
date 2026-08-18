@@ -539,7 +539,7 @@ function renderPipeline() {
     var addT = (p.addons||[]).reduce(function(s,a){return s+(parseFloat(a.value)||0);},0);
     var tot = (p.value||0)+addT;
     return '<tr class="prop-row" onclick="openDetail('+p.id+')">'+
-      '<td title="'+p.address+'"><div style="font-weight:600">'+p.address+'</div></td>'+
+      '<td title="'+p.address+'"><div style="font-weight:600">'+p.address+(p.review?' <span style="font-size:11px">&#11088;</span>':'')+'</div></td>'+
       '<td style="color:#666;font-size:12px">'+(p.agency||'—')+'</td>'+
       '<td><span class="badge '+sc+'">'+p.status+'</span></td>'+
       '<td style="color:#065F46;font-size:12px;font-weight:600">'+(p.dates&&p.dates.staging1&&p.dates.staging1.date?new Date(p.dates.staging1.date+'T12:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}):'—')+'</td>'+
@@ -556,7 +556,7 @@ function renderPipeline() {
     var addT = (p.addons||[]).reduce(function(s,a){return s+(parseFloat(a.value)||0);},0);
     return '<div class="prop-card" onclick="openDetail('+p.id+')">'+
       '<div class="prop-card-top"><div>'+
-      '<div class="prop-card-addr">'+p.address+'</div>'+
+      '<div class="prop-card-addr">'+p.address+(p.review?'  <span title="Has review" style="font-size:13px">&#11088;</span>':'')+'</div>'+
       '<div class="prop-card-client">'+(p.client||'')+'</div></div>'+
       '<span class="badge '+sc+'">'+p.status+'</span></div>'+
       '<div class="prop-card-mid">'+
@@ -752,6 +752,10 @@ function renderDetailBody(p) {
     '<input id="fln-'+p.id+'" placeholder="Label" style="max-width:100px">'+
     '<button onclick="addFileLink('+p.id+')">+ Add</button></div></div>'+
 
+    '<div class="m-sec"><div class="m-sec-title">Review &#11088;</div>'+
+    '<textarea id="review-'+p.id+'" placeholder="Paste review text here..." style="width:100%;padding:9px 12px;font-size:13px;border:1px solid #e0deda;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;resize:vertical;min-height:80px;outline:none" onchange="updateReview('+p.id+',this.value)">'+(p.review||'')+'</textarea>'+
+    '</div>'+
+
     '<div class="m-sec"><div class="m-sec-title">Comments</div>'+
     '<div id="cm-'+p.id+'">'+commentsHtml+'</div>'+
     '<div class="comment-row" style="margin-top:8px">'+
@@ -944,6 +948,12 @@ function editClItem(el, pid, phase, idx, bl) {
   };
 }
 
+function updateReview(pid, val) {
+  var p = props.find(function(x){ return x.id===pid; }); if(!p) return;
+  p.review = val.trim();
+  savePropToServer(p);
+  renderPipeline();
+}
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');renderPipeline();}
 function handleDetailBg(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
 function closeAddModal(){document.getElementById('add-overlay').classList.remove('open');}
