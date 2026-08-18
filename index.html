@@ -767,11 +767,10 @@ function renderDetailBody(p) {
         }).join('')
       : '<div style="font-size:12px;color:#bbb;padding:4px 0">No testimonials yet.</div>')+
     '</div>'+
-    '<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">'+
-    '<input id="ti-tm-from-'+p.id+'" placeholder="From (e.g. Sarah Jones, Ray White)" style="width:100%;padding:8px 12px;font-size:13px;border:1px solid #e0deda;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none">'+
-    '<div class="comment-row">'+
-    '<input id="ti-tm-'+p.id+'" placeholder="Paste testimonial text...">'+
-    '<button onclick="addTestimonial('+p.id+')">+ Add</button></div></div>'+
+    '<div style="margin-top:8px;display:flex;gap:6px;align-items:flex-start">'+
+    '<input id="ti-tm-from-'+p.id+'" placeholder="From..." style="width:140px;flex-shrink:0;padding:8px 12px;font-size:13px;border:1px solid #e0deda;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none">'+
+    '<input id="ti-tm-'+p.id+'" placeholder="Paste testimonial text..." style="flex:1;padding:8px 12px;font-size:13px;border:1px solid #e0deda;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none">'+
+    '<button onclick="addTestimonial('+p.id+')" style="padding:8px 14px;font-size:13px;font-weight:500;border:1px solid #e0deda;border-radius:8px;background:#fafaf8;cursor:pointer;color:#1a1a1a;white-space:nowrap">+ Add</button></div>'+
     '</div>'+
 
     '<div class="m-sec"><div class="m-sec-title">Comments</div>'+
