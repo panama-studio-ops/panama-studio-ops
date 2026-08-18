@@ -539,7 +539,7 @@ function renderPipeline() {
     var addT = (p.addons||[]).reduce(function(s,a){return s+(parseFloat(a.value)||0);},0);
     var tot = (p.value||0)+addT;
     return '<tr class="prop-row" onclick="openDetail('+p.id+')">'+
-      '<td title="'+p.address+'"><div style="font-weight:600">'+p.address+(p.review?' <span style="font-size:11px">&#11088;</span>':'')+'</div></td>'+
+      '<td title="'+p.address+'"><div style="font-weight:600">'+p.address+((p.testimonials&&p.testimonials.length)?' <span style="font-size:11px">&#11088;</span>':'')+'</div></td>'+
       '<td style="color:#666;font-size:12px">'+(p.agency||'—')+'</td>'+
       '<td><span class="badge '+sc+'">'+p.status+'</span></td>'+
       '<td style="color:#065F46;font-size:12px;font-weight:600">'+(p.dates&&p.dates.staging1&&p.dates.staging1.date?new Date(p.dates.staging1.date+'T12:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}):'—')+'</td>'+
@@ -556,7 +556,7 @@ function renderPipeline() {
     var addT = (p.addons||[]).reduce(function(s,a){return s+(parseFloat(a.value)||0);},0);
     return '<div class="prop-card" onclick="openDetail('+p.id+')">'+
       '<div class="prop-card-top"><div>'+
-      '<div class="prop-card-addr">'+p.address+(p.review?'  <span title="Has review" style="font-size:13px">&#11088;</span>':'')+'</div>'+
+      '<div class="prop-card-addr">'+p.address+((p.testimonials&&p.testimonials.length)?'  <span title="Has testimonial" style="font-size:13px">&#11088;</span>':'')+'</div>'+
       '<div class="prop-card-client">'+(p.client||'')+'</div></div>'+
       '<span class="badge '+sc+'">'+p.status+'</span></div>'+
       '<div class="prop-card-mid">'+
@@ -752,8 +752,24 @@ function renderDetailBody(p) {
     '<input id="fln-'+p.id+'" placeholder="Label" style="max-width:100px">'+
     '<button onclick="addFileLink('+p.id+')">+ Add</button></div></div>'+
 
-    '<div class="m-sec"><div class="m-sec-title">Review &#11088;</div>'+
-    '<textarea id="review-'+p.id+'" placeholder="Paste review text here..." style="width:100%;padding:9px 12px;font-size:13px;border:1px solid #e0deda;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;resize:vertical;min-height:80px;outline:none" onchange="updateReview('+p.id+',this.value)">'+(p.review||'')+'</textarea>'+
+    '<div class="m-sec"><div class="m-sec-title">Testimonials &#11088;</div>'+
+    '<div id="tm-'+p.id+'">'+
+    ((p.testimonials||[]).length
+      ? (p.testimonials||[]).map(function(t,i){
+          return '<div class="comment" id="tm-'+p.id+'-'+i+'">'+
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'+
+            '<div class="comment-text">'+t.text+'</div>'+
+            '<div style="display:flex;gap:6px;flex-shrink:0">'+
+            '<button onclick="deleteTestimonial('+p.id+','+i+')" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:14px;padding:0;line-height:1">&#215;</button>'+
+            '</div></div>'+
+            (t.author?'<div class="comment-meta">'+t.author+'</div>':'')+
+            '</div>';
+        }).join('')
+      : '<div style="font-size:12px;color:#bbb;padding:4px 0">No testimonials yet.</div>')+
+    '</div>'+
+    '<div class="comment-row" style="margin-top:8px">'+
+    '<input id="ti-tm-'+p.id+'" placeholder="Paste testimonial text..." onkeydown="if(event.key===&quot;Enter&quot;)addTestimonial('+p.id+')">'+
+    '<button onclick="addTestimonial('+p.id+')">+ Add</button></div>'+
     '</div>'+
 
     '<div class="m-sec"><div class="m-sec-title">Comments</div>'+
@@ -948,10 +964,23 @@ function editClItem(el, pid, phase, idx, bl) {
   };
 }
 
-function updateReview(pid, val) {
+function addTestimonial(pid) {
   var p = props.find(function(x){ return x.id===pid; }); if(!p) return;
-  p.review = val.trim();
+  var inp = document.getElementById('ti-tm-'+pid);
+  var txt = inp.value.trim(); if(!txt) return;
+  if(!p.testimonials) p.testimonials = [];
+  p.testimonials.push({text: txt, author: ''});
+  inp.value = '';
   savePropToServer(p);
+  renderDetailBody(p);
+  renderPipeline();
+}
+function deleteTestimonial(pid, idx) {
+  var p = props.find(function(x){ return x.id===pid; }); if(!p) return;
+  if(!confirm('Delete this testimonial?')) return;
+  p.testimonials.splice(idx, 1);
+  savePropToServer(p);
+  renderDetailBody(p);
   renderPipeline();
 }
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');renderPipeline();}
