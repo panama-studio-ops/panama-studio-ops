@@ -758,18 +758,20 @@ function renderDetailBody(p) {
       ? (p.testimonials||[]).map(function(t,i){
           return '<div class="comment" id="tm-'+p.id+'-'+i+'">'+
             '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'+
+            '<div style="flex:1">'+
+            (t.author?'<div style="font-size:11px;font-weight:600;color:#666;margin-bottom:4px">From: '+t.author+'</div>':'')+
             '<div class="comment-text">'+t.text+'</div>'+
-            '<div style="display:flex;gap:6px;flex-shrink:0">'+
-            '<button onclick="deleteTestimonial('+p.id+','+i+')" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:14px;padding:0;line-height:1">&#215;</button>'+
-            '</div></div>'+
-            (t.author?'<div class="comment-meta">'+t.author+'</div>':'')+
-            '</div>';
+            '</div>'+
+            '<button onclick="deleteTestimonial('+p.id+','+i+')" style="background:none;border:none;cursor:pointer;color:#bbb;font-size:14px;padding:0;line-height:1;flex-shrink:0">&#215;</button>'+
+            '</div></div>';
         }).join('')
       : '<div style="font-size:12px;color:#bbb;padding:4px 0">No testimonials yet.</div>')+
     '</div>'+
-    '<div class="comment-row" style="margin-top:8px">'+
-    '<input id="ti-tm-'+p.id+'" placeholder="Paste testimonial text..." onkeydown="if(event.key===&quot;Enter&quot;)addTestimonial('+p.id+')">'+
-    '<button onclick="addTestimonial('+p.id+')">+ Add</button></div>'+
+    '<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">'+
+    '<input id="ti-tm-from-'+p.id+'" placeholder="From (e.g. Sarah Jones, Ray White)" style="width:100%;padding:8px 12px;font-size:13px;border:1px solid #e0deda;border-radius:8px;background:#fff;color:#1a1a1a;font-family:inherit;outline:none">'+
+    '<div class="comment-row">'+
+    '<input id="ti-tm-'+p.id+'" placeholder="Paste testimonial text...">'+
+    '<button onclick="addTestimonial('+p.id+')">+ Add</button></div></div>'+
     '</div>'+
 
     '<div class="m-sec"><div class="m-sec-title">Comments</div>'+
@@ -967,10 +969,13 @@ function editClItem(el, pid, phase, idx, bl) {
 function addTestimonial(pid) {
   var p = props.find(function(x){ return x.id===pid; }); if(!p) return;
   var inp = document.getElementById('ti-tm-'+pid);
+  var fromInp = document.getElementById('ti-tm-from-'+pid);
   var txt = inp.value.trim(); if(!txt) return;
+  var from = fromInp ? fromInp.value.trim() : '';
   if(!p.testimonials) p.testimonials = [];
-  p.testimonials.push({text: txt, author: ''});
+  p.testimonials.push({text: txt, author: from});
   inp.value = '';
+  if(fromInp) fromInp.value = '';
   savePropToServer(p);
   renderDetailBody(p);
   renderPipeline();
