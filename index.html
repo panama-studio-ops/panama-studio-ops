@@ -204,6 +204,14 @@ tr.prop-row:hover td{background:#fafaf8}
 .gcal-btn.confirmed{border-color:#A7F3D0;background:#ECFDF5;color:#065F46}
 .gcal-btn.tentative{border-color:#FDE68A;background:#FFFBEB;color:#92400E}
 .gcal-btn.disabled{border-color:#e0deda;background:#fafaf8;color:#bbb;cursor:default;pointer-events:none}
+.zones-table{width:100%;border-collapse:collapse;font-size:12px}
+.zones-table th{padding:6px 10px;text-align:left;font-size:10px;font-weight:700;color:#999;border-bottom:1px solid #e8e6e0;background:#fafaf8;letter-spacing:.04em;text-transform:uppercase}
+.zones-table td{padding:6px 10px;border-bottom:1px solid #f0ede8;color:#1a1a1a;vertical-align:middle}
+.zones-table tr:last-child td{border-bottom:none}
+.zones-table input[type=number]{width:52px;padding:4px 6px;font-size:12px;border:1px solid #e8e6e0;border-radius:6px;background:#fafaf8;color:#1a1a1a;font-family:inherit;outline:none;text-align:center}
+.zones-table input[type=number]:focus{border-color:#1a1a1a;background:#fff}
+.zone-total{font-weight:700;color:#1a1a1a;text-align:center}
+.zone-category{font-weight:600;color:#555;background:#f8f7f5!important}
 </style>
 </head>
 <body>
@@ -236,6 +244,7 @@ tr.prop-row:hover td{background:#fafaf8}
     <div style="display:flex;align-items:center;gap:10px">
       <div class="section-title">Properties</div>
       <button onclick="exportToCSV()" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid #e0deda;border-radius:7px;background:#fff;cursor:pointer;color:#555">&#8595; Export CSV</button>
+      <button onclick="exportZones()" style="padding:4px 10px;font-size:11px;font-weight:600;border:1px solid #e0deda;border-radius:7px;background:#fff;cursor:pointer;color:#555">&#8595; Export Zones</button>
     </div>
     <div class="filters">
       <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
@@ -338,6 +347,16 @@ tr.prop-row:hover td{background:#fafaf8}
 
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbyN5TH8LHr6qCbmpyR0gcd4agsJ1Pz19D8RLlf-cfhU_dztvhN4b0ClLnUWAEuv3wYp/exec';
+const ZONE_CATEGORIES = [
+  {id:'kitchen',   label:'Kitchen',      items:['Large','Average','Small']},
+  {id:'bedroom',   label:'Bedrooms',     items:['Large','Average','Small']},
+  {id:'bathroom',  label:'Bathrooms',    items:['Ensuite','Other']},
+  {id:'office',    label:'Office',       items:['Office']},
+  {id:'living',    label:'Living rooms', items:['Large','Average','Small']},
+  {id:'dining',    label:'Dining rooms', items:['Large','Average','Small']},
+  {id:'alfresco',  label:'Alfresco',     items:['Dining','Small']}
+];
+
 const PROJECT_TYPES = ['Full Stage','Partial Stage','Interior Design','Photo Package - Essential','Photo Package - Styled','Commercial Photography','Photography Only'];
 
 const DATE_TYPES = [
@@ -736,6 +755,30 @@ function renderDetailBody(p) {
 
     '<div class="m-sec"><div class="m-sec-title">Key dates</div><div class="dates-grid">'+datesHtml+'</div></div>'+
 
+    '<div class="m-sec"><div class="m-sec-title">Zones &amp; quoting</div>'+
+    '<table class="zones-table">'+
+    '<thead><tr>'+
+    '<th>Category</th><th>Type</th><th style="text-align:center">Qty</th><th style="text-align:center">Total</th>'+
+    '</tr></thead><tbody>'+
+    ZONE_CATEGORIES.map(function(cat) {
+      var catTotal = cat.items.reduce(function(sum,item){
+        var k=cat.id+'_'+item.toLowerCase().replace(/ /g,'_');
+        return sum+(parseInt((p.zones||{})[k])||0);
+      },0);
+      return cat.items.map(function(item,i){
+        var k=cat.id+'_'+item.toLowerCase().replace(/ /g,'_');
+        var v=((p.zones||{})[k])||'';
+        var first=i===0;
+        return '<tr>'+
+          (first?'<td class="zone-category" rowspan="'+cat.items.length+'">'+cat.label+'</td>':'')+
+          '<td>'+item+'</td>'+
+          '<td><input type="number" min="0" value="'+v+'" placeholder="0" onchange="updateZone('+p.id+',&quot;'+k+'&quot;,this.value)"></td>'+
+          (first?'<td class="zone-total" rowspan="'+cat.items.length+'" id="zone-total-'+p.id+'-'+cat.id+'">'+catTotal+'</td>':'')+
+          '</tr>';
+      }).join('');
+    }).join('')+
+    '</tbody></table></div>'+
+
     '<div class="m-sec"><div class="m-sec-title">Tasks &amp; assignments</div>'+
     '<div id="tasks-'+p.id+'">'+tasksHtml+'</div>'+
     '<div class="add-row" style="margin-top:8px">'+
@@ -931,11 +974,12 @@ function addAddon(pid){
 function removeAddon(pid,idx){var p=props.find(function(x){return x.id===pid;});if(!p||!p.addons)return;p.addons.splice(idx,1);savePropToServer(p);renderDetailBody(p);renderPipeline();}
 
 function exportToCSV(){
-  var headers=['Property Address','Vendor','Vendor Email','Agency','Agent','Agent Email','Type','Status','Invoice','Staging Value','Add-ons Total','Total Value','Staging Day 1','Staging Day 2','Walkthrough','Pick & Pack','Photography Date','Destage Date','Logistics Install Date','Logistics Destage Date'];
+  var headers=['Property Address','Vendor','Vendor Email','Agency','Agent','Agent Email','Type','Status','Invoice','Staging Value','Add-ons Total','Total Value','Staging Day 1','Staging Day 2','Walkthrough','Pick & Pack','Photography Date','Destage Date','Logistics Install Date','Logistics Destage Date','Kitchen Large','Kitchen Average','Kitchen Small','Bedrooms Large','Bedrooms Average','Bedrooms Small','Bathrooms Ensuite','Bathrooms Other','Office','Living Large','Living Average','Living Small','Dining Large','Dining Average','Dining Small','Alfresco Dining','Alfresco Small'];
   var rows=props.map(function(p){
     var addT=(p.addons||[]).reduce(function(s,a){return s+(parseFloat(a.value)||0);},0);
     var fmtDate=function(key){return p.dates&&p.dates[key]&&p.dates[key].date?p.dates[key].date:'';};
-    return [p.address||'',p.client||'',p.email||'',p.agency||'',p.agent||'',p.agentEmail||'',p.type||'',p.status||'',p.invoice||'',p.value||0,addT,(p.value||0)+addT,fmtDate('staging1'),fmtDate('staging2'),fmtDate('walkthrough'),fmtDate('pack'),fmtDate('photo'),fmtDate('destage'),fmtDate('logistics'),fmtDate('logdestage')].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';});
+    var z=p.zones||{};var zv=function(k){return z[k]||0;};
+    return [p.address||'',p.client||'',p.email||'',p.agency||'',p.agent||'',p.agentEmail||'',p.type||'',p.status||'',p.invoice||'',p.value||0,addT,(p.value||0)+addT,fmtDate('staging1'),fmtDate('staging2'),fmtDate('walkthrough'),fmtDate('pack'),fmtDate('photo'),fmtDate('destage'),fmtDate('logistics'),fmtDate('logdestage'),zv('kitchen_large'),zv('kitchen_average'),zv('kitchen_small'),zv('bedroom_large'),zv('bedroom_average'),zv('bedroom_small'),zv('bathroom_ensuite'),zv('bathroom_other'),zv('office_office'),zv('living_large'),zv('living_average'),zv('living_small'),zv('dining_large'),zv('dining_average'),zv('dining_small'),zv('alfresco_dining'),zv('alfresco_small')].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';});
   });
   var csv=[headers.map(function(h){return '"'+h+'"';}).join(',')].concat(rows.map(function(r){return r.join(',');})).join('\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);
@@ -1025,6 +1069,58 @@ function deleteTestimonial(pid, idx) {
   savePropToServer(p);
   renderDetailBody(p);
   renderPipeline();
+}
+function updateZone(pid,key,val){
+  var p=props.find(function(x){return x.id===pid;});if(!p)return;
+  if(!p.zones)p.zones={};
+  p.zones[key]=parseInt(val)||0;
+  var catId=key.split('_')[0];
+  var cat=ZONE_CATEGORIES.find(function(c){return c.id===catId;});
+  if(cat){
+    var total=cat.items.reduce(function(sum,item){
+      var k=cat.id+'_'+item.toLowerCase().replace(/ /g,'_');
+      return sum+(parseInt((p.zones||{})[k])||0);
+    },0);
+    var el=document.getElementById('zone-total-'+pid+'-'+catId);
+    if(el)el.textContent=total;
+  }
+  savePropToServer(p);
+}
+function exportZones(){
+  var headers=['Property Address','Status','Staging Value (ex GST)',
+    'Kitchen Large','Kitchen Average','Kitchen Small','Kitchen Total',
+    'Bedrooms Large','Bedrooms Average','Bedrooms Small','Bedrooms Total',
+    'Bathrooms Ensuite','Bathrooms Other','Bathrooms Total',
+    'Office',
+    'Living Large','Living Average','Living Small','Living Total',
+    'Dining Large','Dining Average','Dining Small','Dining Total',
+    'Alfresco Dining','Alfresco Small','Alfresco Total'
+  ];
+  var rows=props.map(function(p){
+    var z=p.zones||{};
+    var zv=function(k){return parseInt(z[k])||0;};
+    var kitchenT=zv('kitchen_large')+zv('kitchen_average')+zv('kitchen_small');
+    var bedroomT=zv('bedroom_large')+zv('bedroom_average')+zv('bedroom_small');
+    var bathroomT=zv('bathroom_ensuite')+zv('bathroom_other');
+    var officeT=zv('office_office');
+    var livingT=zv('living_large')+zv('living_average')+zv('living_small');
+    var diningT=zv('dining_large')+zv('dining_average')+zv('dining_small');
+    var alfrescoT=zv('alfresco_dining')+zv('alfresco_small');
+    return [
+      p.address||'', p.status||'', p.value||0,
+      zv('kitchen_large'),zv('kitchen_average'),zv('kitchen_small'),kitchenT,
+      zv('bedroom_large'),zv('bedroom_average'),zv('bedroom_small'),bedroomT,
+      zv('bathroom_ensuite'),zv('bathroom_other'),bathroomT,
+      officeT,
+      zv('living_large'),zv('living_average'),zv('living_small'),livingT,
+      zv('dining_large'),zv('dining_average'),zv('dining_small'),diningT,
+      zv('alfresco_dining'),zv('alfresco_small'),alfrescoT
+    ].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';});
+  });
+  var csv=[headers.map(function(h){return '"'+h+'"';}).join(',')].concat(rows.map(function(r){return r.join(',');})).join('\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='panama-zones-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 function closeDetail(){document.getElementById('detail-overlay').classList.remove('open');renderPipeline();}
 function handleDetailBg(e){if(e.target===document.getElementById('detail-overlay'))closeDetail();}
