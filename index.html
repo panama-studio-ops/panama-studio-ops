@@ -1088,17 +1088,16 @@ function updateZone(pid,key,val){
 }
 function exportZones(){
   var headers=['Property Address','Status','Staging Value (ex GST)',
-    'Kitchen Large','Kitchen Average','Kitchen Small','Kitchen Total',
-    'Bedrooms Large','Bedrooms Average','Bedrooms Small','Bedrooms Total',
-    'Bathrooms Ensuite','Bathrooms Other','Bathrooms Total',
-    'Office',
-    'Living Large','Living Average','Living Small','Living Total',
-    'Dining Large','Dining Average','Dining Small','Dining Total',
-    'Alfresco Dining','Alfresco Small','Alfresco Total'
+    'Kitchen','Bedrooms','Bathrooms','Office','Living Rooms','Dining Rooms','Alfresco'
   ];
   var rows=props.map(function(p){
     var z=p.zones||{};
     var zv=function(k){return parseInt(z[k])||0;};
+    var fmt=function(total,parts){
+      if(!total) return '0';
+      var detail=parts.filter(function(x){return x.n>0;}).map(function(x){return x.n+' '+x.l;}).join(', ');
+      return detail ? total+' ('+detail+')' : String(total);
+    };
     var kitchenT=zv('kitchen_large')+zv('kitchen_average')+zv('kitchen_small');
     var bedroomT=zv('bedroom_large')+zv('bedroom_average')+zv('bedroom_small');
     var bathroomT=zv('bathroom_ensuite')+zv('bathroom_other');
@@ -1108,13 +1107,13 @@ function exportZones(){
     var alfrescoT=zv('alfresco_dining')+zv('alfresco_small');
     return [
       p.address||'', p.status||'', p.value||0,
-      zv('kitchen_large'),zv('kitchen_average'),zv('kitchen_small'),kitchenT,
-      zv('bedroom_large'),zv('bedroom_average'),zv('bedroom_small'),bedroomT,
-      zv('bathroom_ensuite'),zv('bathroom_other'),bathroomT,
-      officeT,
-      zv('living_large'),zv('living_average'),zv('living_small'),livingT,
-      zv('dining_large'),zv('dining_average'),zv('dining_small'),diningT,
-      zv('alfresco_dining'),zv('alfresco_small'),alfrescoT
+      fmt(kitchenT,[{n:zv('kitchen_large'),l:'Large'},{n:zv('kitchen_average'),l:'Average'},{n:zv('kitchen_small'),l:'Small'}]),
+      fmt(bedroomT,[{n:zv('bedroom_large'),l:'Large'},{n:zv('bedroom_average'),l:'Average'},{n:zv('bedroom_small'),l:'Small'}]),
+      fmt(bathroomT,[{n:zv('bathroom_ensuite'),l:'Ensuite'},{n:zv('bathroom_other'),l:'Other'}]),
+      fmt(officeT,[{n:officeT,l:'Office'}]),
+      fmt(livingT,[{n:zv('living_large'),l:'Large'},{n:zv('living_average'),l:'Average'},{n:zv('living_small'),l:'Small'}]),
+      fmt(diningT,[{n:zv('dining_large'),l:'Large'},{n:zv('dining_average'),l:'Average'},{n:zv('dining_small'),l:'Small'}]),
+      fmt(alfrescoT,[{n:zv('alfresco_dining'),l:'Dining'},{n:zv('alfresco_small'),l:'Small'}])
     ].map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';});
   });
   var csv=[headers.map(function(h){return '"'+h+'"';}).join(',')].concat(rows.map(function(r){return r.join(',');})).join('\n');
